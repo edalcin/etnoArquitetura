@@ -1,0 +1,21 @@
+Quero criar neste repositório no GitHub uma documentação para uma proposta de arquitetura de um sistema de informações sobre conhecimento tradicional. Gostaria de usar o "C4 Model" como metodologia de modelagem do sistema, partindo da visão que o sistema teria 3 grande contextos: Aquisição, Curadoria e Apresentação.
+
+O contexto da aquisição envolve, por exemplo, a captura de informações sobre uso de plantas por comunidade tradicionais documentadas em artigos científicos e livros (dados secundários). A aquisição pode envolver também o registro de dados primários, com todos os cuidados necessários, presentes na legislação pertinente e nos princípios C.A.R.E. O contexto de Curadoria envolve o desenvolvimento de uma interface para que pesquisadores e representantes de comunidades tradicionais possam agregar qualidade aos dados vindos da Aquisição. Por fim, o contexto da apresentação envolve a criação de uma interface pública para acesso e consulta do conhecimento presente na base de dados. Os três contextos compartilham uma única base de dados que armazenará o conhecimento tradicional associado à biodiversidade. Considerar a complexidade da estrutura de dados, avaliando bases de dados orientadas à documentos, como MongoDB, ou soluções multi-modelos, como Surreal DB. A aquisição deve prever dados vindos de diferentes fontes e ferramentas. Assim, um padrão de dados deve ser considerado e um conjunto de APIs deve ser considerado para consumo de dados no contexto da aquisição. A aquisição deve considerar também a possibilidade de "robôs" monitorando sites de jornais científicos sobre etnobotânica, por exempo, fazendo carga de dados de forma automática, para ser validada por administradores da plataforma. O sistema deve prever ainda consumir dados, via API, de diferentes fontes relevantes à qualificação dos dados, como por exemplo, dados taxonômicos sendo validados por APIs do https://www.gbif.org/ e https://verifier.globalnames.org/api
+
+
+
+Construa uma estrutura para documentação da proposta de arquitetura e um readme.md com a proposta. O README.md não deve ser muito técnico, e pode conter visualizações gráficas em 	"mermaid".
+
+
+
+> Considere os seguintes documentos como descritores de uma lista de iniciativas que necessitam ser integradas nesta
+ arquitetura como fontes de informações sobre conhecimento tradicional:
+* MCTI-GEF: @docs\iniciativas\MCTI-GEF\Projeto-GEF_Entre-Ciências.pdf
+* Rede de Conhecimento: @docs\iniciativas\redeConhecimento\SEI_022081189_Nota_Tecnica_1.pdf
+* SISGEN: @docs\iniciativas\SISGEN\plano_de_trabalho_sisgen_mma_-_sibbr_rnp.pdf
+* USEFLORA: @docs\iniciativas\Useflora\TCC _Patricia_Ferrari.pdf
+
+Analise estes documentos profundamente e encontre a relação pela demanda da existencia de um sistema de informações
+nacional que integre estas diferentes fontes de informação, e outras que venham surgir.
+
+Faça referência a estas iniciativas e a necessidade de integração destes dados no README.md e desenvolva proposta de  solução técnica na arquitetura
