@@ -26,6 +26,7 @@ graph TB
 
     subgraph "Sistemas Externos"
         FLORA[Flora e Funga<br/>do Brasil]
+        FAUNA[Fauna do Brasil]
         GBIF[GBIF<br/>Global Biodiversity<br/>Information Facility]
         JOURNALS[Periódicos<br/>Científicos]
         EXT[Outros Sistemas<br/>Etnobotânicos]
@@ -39,12 +40,14 @@ graph TB
     PUB -->|Consulta informações<br/>públicas| SYS
     DEV -->|Consome APIs<br/>públicas| SYS
 
-    SYS -->|Verifica nomenclatura<br/>(primária)| FLORA
+    SYS -->|Verifica nomenclatura<br/>Flora/Fungos (primária)| FLORA
+    SYS -->|Verifica nomenclatura<br/>Fauna (primária)| FAUNA
     SYS -->|Valida taxonomia<br/>(fallback)| GBIF
     SYS -->|Coleta artigos<br/>automaticamente| JOURNALS
     SYS -->|Integra dados| EXT
 
     FLORA -->|Retorna verificação| SYS
+    FAUNA -->|Retorna verificação| SYS
     GBIF -->|Retorna validação| SYS
     JOURNALS -->|Fornece metadados| SYS
     EXT -->|Compartilha dados| SYS
@@ -57,6 +60,7 @@ graph TB
     style PUB fill:#08427b,stroke:#052e56,color:#ffffff
     style DEV fill:#08427b,stroke:#052e56,color:#ffffff
     style FLORA fill:#999999,stroke:#6b6b6b,color:#ffffff
+    style FAUNA fill:#999999,stroke:#6b6b6b,color:#ffffff
     style GBIF fill:#999999,stroke:#6b6b6b,color:#ffffff
     style JOURNALS fill:#999999,stroke:#6b6b6b,color:#ffffff
     style EXT fill:#999999,stroke:#6b6b6b,color:#ffffff
@@ -178,11 +182,28 @@ graph TB
 - Informações taxonômicas completas
 - Status de validação
 
-**Estratégia:**
-- Primeira tentativa: Flora e Funga do Brasil (validação primária)
-- Fallback: GBIF (quando não encontrado ou para espécies não-brasileiras)
+### 3. Fauna do Brasil
+**URL:** https://fauna.jbrj.gov.br/
 
-### 3. Periódicos Científicos
+**Propósito:** Verificação primária de nomenclatura científica para fauna brasileira
+
+**Integração:**
+- API REST para busca de nomenclatura da fauna
+- Validação contra catálogo taxonômico oficial brasileiro
+- Dados de distribuição geográfica
+- Informações sobre status de conservação
+
+**Dados Consumidos:**
+- Nomes científicos de fauna (verificação individual ou em lote)
+- Informações taxonômicas completas para animais
+- Status de validação
+
+**Estratégia:**
+- Para flora/fungos: Flora e Funga do Brasil (validação primária)
+- Para fauna: Fauna do Brasil (validação primária)
+- Para ambos: GBIF (fallback quando não encontrado nas bases brasileiras)
+
+### 4. Periódicos Científicos
 **Exemplos:** Journal of Ethnobiology, Economic Botany, Ethnobotany Research
 
 **Propósito:** Coleta automatizada de artigos relevantes
@@ -219,7 +240,7 @@ graph TB
 ### Fluxo 1: Aquisição de Dados Primários
 1. Pesquisador ou Representante autentica no sistema
 2. Preenche formulário estruturado de registro
-3. Sistema valida dados contra Flora e Funga do Brasil (com fallback GBIF)
+3. Sistema valida dados contra bases brasileiras (Flora e Funga para flora/fungos, Fauna para fauna) com fallback GBIF
 4. Dados são armazenados com status "pendente"
 5. Curador é notificado para revisão
 
@@ -234,7 +255,7 @@ graph TB
 ### Fluxo 3: Curadoria e Validação
 1. Curador acessa dashboard de itens pendentes
 2. Revisa dados submetidos
-3. Sistema executa validações automáticas (Flora e Funga do Brasil com fallback GBIF)
+3. Sistema executa validações automáticas (Flora/Fauna do Brasil com fallback GBIF)
 4. Curador enriquece e corrige informações
 5. Representante de comunidade valida (se aplicável)
 6. Curador aprova publicação
@@ -287,7 +308,7 @@ graph TB
 
 ### Premissas
 - Acesso à internet para validações externas
-- Disponibilidade das APIs Flora e Funga do Brasil e GBIF
+- Disponibilidade das APIs Flora e Funga do Brasil, Fauna do Brasil e GBIF
 - Colaboração ativa de comunidades tradicionais
 - Pesquisadores capacitados para entrada de dados
 

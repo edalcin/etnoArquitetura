@@ -50,6 +50,7 @@ graph TB
 
     subgraph "Sistemas Externos"
         FLORA[Flora e Funga do Brasil API]
+        FAUNA[Fauna do Brasil API]
         GBIF[GBIF API]
         JOURNALS[Periódicos]
     end
@@ -75,6 +76,7 @@ graph TB
     CUR_API --> VAL
     CUR_API --> NOTIF
     VAL --> FLORA
+    VAL --> FAUNA
     VAL --> GBIF
 
     PUB_API --> DB
@@ -320,8 +322,9 @@ Pendente → Em Revisão → Em Validação → Aprovado → Publicado
 **Tecnologia:** Python com Flask ou FastAPI
 
 **Responsabilidades:**
-- Validar nomes científicos via Flora e Funga do Brasil (primária)
-- Verificar nomenclatura via GBIF (fallback)
+- Validar nomes científicos via Flora e Funga do Brasil para flora/fungos (primária)
+- Validar nomes científicos via Fauna do Brasil para fauna (primária)
+- Verificar nomenclatura via GBIF (fallback para ambas)
 - Enriquecer com dados taxonômicos
 - Sugerir correções
 
@@ -335,17 +338,22 @@ GET    /api/validation/suggestions/:name    - Sugestões de correção
 
 **Integração Externa:**
 ```python
-# Flora e Funga do Brasil (primária)
+# Flora e Funga do Brasil (primária para flora/fungos)
 GET https://floradobrasil.jbrj.gov.br/api/v1/search?name={scientific_name}
 
-# GBIF Species Match (fallback)
+# Fauna do Brasil (primária para fauna)
+GET https://fauna.jbrj.gov.br/api/v1/search?name={scientific_name}
+
+# GBIF Species Match (fallback para ambas)
 GET https://api.gbif.org/v1/species/match?name={scientific_name}
 ```
 
 **Estratégia de Validação:**
-1. Tenta encontrar na Flora e Funga do Brasil
-2. Se não encontrado, fallback para GBIF
-3. Retorna dados taxonômicos enriquecidos
+1. Detectar tipo de organismo (flora, fauna, ou ambíguo)
+2. Para flora/fungos: tentar Flora e Funga do Brasil primeiro
+3. Para fauna: tentar Fauna do Brasil primeiro
+4. Se não encontrado em base brasileira, fallback para GBIF
+5. Retorna dados taxonômicos enriquecidos com source informado
 
 **Response Enrichment:**
 ```json

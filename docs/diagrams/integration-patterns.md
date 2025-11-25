@@ -270,9 +270,109 @@ async function validateTaxonomyWithFallback(scientificName) {
 
 ---
 
-### 3. Periódicos Científicos
+### 3. Fauna do Brasil
 
-#### 3.1 PubMed Central (PMC)
+**URL Base:** `https://fauna.jbrj.gov.br/api/v1/`
+
+**Propósito:** Verificação primária de nomenclatura científica para fauna brasileira
+
+#### Endpoint Principal
+
+##### 3.1 Search Species
+
+Busca espécies de fauna por nome científico com validação contra o catálogo oficial brasileiro.
+
+**Request:**
+```http
+GET https://fauna.jbrj.gov.br/api/v1/search?name=Panthera onca
+```
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "id": "54321",
+      "scientificName": "Panthera onca Linnaeus, 1758",
+      "commonName": "Jaguar",
+      "commonNamePT": "Onça-pintada",
+      "family": "Felidae",
+      "order": "Carnivora",
+      "class": "Mammalia",
+      "phylum": "Chordata",
+      "kingdom": "Animalia",
+      "author": "Linnaeus",
+      "year": 1758,
+      "synonyms": [
+        "Felis onca",
+        "Jaguar onca"
+      ],
+      "distribution": ["AC", "AM", "AP", "BA", "MA", "MT", "MS", "MG", "PA", "PR", "RO", "RR", "SP", "TO"],
+      "conservationStatus": "Vulnerable",
+      "endemism": false,
+      "taxonomy": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Felidae",
+        "genus": "Panthera",
+        "species": "onca"
+      }
+    }
+  ]
+}
+```
+
+**Uso no Sistema:**
+```javascript
+async function validateFaunaDoBasil(scientificName) {
+  try {
+    const response = await fetch(
+      `https://fauna.jbrj.gov.br/api/v1/search?name=${encodeURIComponent(scientificName)}`
+    );
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      const species = data.results[0];
+      return {
+        found: true,
+        scientificName: species.scientificName,
+        commonName: species.commonNamePT || species.commonName,
+        family: species.family,
+        synonyms: species.synonyms || [],
+        distribution: species.distribution,
+        conservationStatus: species.conservationStatus,
+        taxonomy: species.taxonomy,
+        source: 'Fauna do Brasil'
+      };
+    } else {
+      return {
+        found: false,
+        message: 'Espécie não encontrada na Fauna do Brasil',
+        source: 'Fauna do Brasil'
+      };
+    }
+  } catch (error) {
+    console.error('Fauna do Brasil error:', error);
+    return null;
+  }
+}
+```
+
+#### Casos de Uso
+
+1. **Validação Primária**: Verificação rápida de fauna brasileira
+2. **Distribuição Geográfica**: Obter estados onde a espécie ocorre
+3. **Status de Conservação**: Integração com classificação oficial brasileira IUCN
+4. **Detecção de Sinônimos**: Identificar nomes alternativos aceitos
+5. **Nomes Vernaculares**: Obter nomes comuns em português
+
+---
+
+### 4. Periódicos Científicos
+
+#### 4.1 PubMed Central (PMC)
 
 **URL Base:** `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/`
 
@@ -384,7 +484,7 @@ for article_id in article_ids:
     queue.enqueue('acquisition.new', metadata)
 ```
 
-#### 3.2 Crossref API
+#### 4.2 Crossref API
 
 **URL Base:** `https://api.crossref.org/`
 
@@ -434,16 +534,16 @@ async function resolveDOI(doi) {
 
 ---
 
-### 4. Outras Bases de Dados Regionais (Futuro)
+### 5. Outras Bases de Dados Regionais (Futuro)
 
-#### 4.1 Integrações Previstas
+#### 5.1 Integrações Previstas
 
 - **Tropicos (Missouri Botanical Garden)**: Nomenclatura botânica com enfoque em Neotrópicos
 - **The Plant List**: Lista de espécies aceitas (fallback adicional)
 - **SIBBR (SiBBr)**: Sistema de Informação sobre Biodiversidade Brasileira
 - **SISGEN**: Sistema Nacional de Gestão do Patrimônio Genético
 
-#### 4.2 Padrão de Integração
+#### 5.2 Padrão de Integração
 
 ```javascript
 // Interface genérica para integrações
@@ -687,6 +787,7 @@ sequenceDiagram
     participant API as Acquisition API
     participant Cache as Redis Cache
     participant Flora as Flora e Funga API
+    participant Fauna as Fauna do Brasil API
     participant GBIF as GBIF API
     participant DB as Database
 
@@ -698,13 +799,20 @@ sequenceDiagram
     else Cache MISS
         API->>Flora: GET /search?name=...
 
-        alt Flora FOUND
+        alt Flora FOUND (flora/fungi)
             Flora-->>API: Species data (primária)
             API->>Cache: Store in cache (30 days TTL)
         else Flora NOT FOUND
-            API->>GBIF: GET /species/match
-            GBIF-->>API: Taxonomy data (fallback)
-            API->>Cache: Store in cache (30 days TTL)
+            API->>Fauna: GET /search?name=...
+
+            alt Fauna FOUND (fauna)
+                Fauna-->>API: Species data (primária)
+                API->>Cache: Store in cache (30 days TTL)
+            else Fauna NOT FOUND
+                API->>GBIF: GET /species/match
+                GBIF-->>API: Taxonomy data (fallback)
+                API->>Cache: Store in cache (30 days TTL)
+            end
         end
     end
 
@@ -816,6 +924,7 @@ Sempre respeitar rate limits de APIs externas:
 | API | Rate Limit | Implementação |
 |-----|-----------|---------------|
 | Flora e Funga do Brasil | Sem limite oficial | Bottleneck: 5 req/s |
+| Fauna do Brasil | Sem limite oficial | Bottleneck: 5 req/s |
 | GBIF | 10 req/s (recomendado) | Bottleneck: 5 req/s |
 | PubMed | 3 req/s sem key, 10 req/s com key | Bottleneck: 3 req/s |
 | Crossref | 50 req/s (com Polite Pool) | Bottleneck: 20 req/s |
@@ -834,6 +943,7 @@ Este documento define os padrões de integração que garantem:
 ## Referências
 
 - [Flora e Funga do Brasil](https://floradobrasil.jbrj.gov.br/consulta/)
+- [Fauna do Brasil](https://fauna.jbrj.gov.br/)
 - [GBIF API Documentation](https://www.gbif.org/developer/summary)
 - [NCBI E-utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/)
 - [Crossref API](https://github.com/CrossRef/rest-api-doc)
