@@ -1,4 +1,4 @@
-# Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade
+# Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade
 
 ## Visão Geral
 
@@ -21,15 +21,15 @@ Iniciativa do ICMBio (CNPT) em parceria com UFSC que busca integrar bases de dad
 #### 3. Modernização do SISGEN (RNP-MMA-BID)
 Projeto de 13 meses para modernizar o Sistema Nacional de Gestão do Patrimônio Genético e CTA, implementando interoperabilidade via IPT (Integrated Publishing Toolkit) com padrões FAIR e CARE.
 
-#### 4. Useflor@: Banco de Dados Etnobotânicos (UFSC)
-Sistema prático com 3.359 registros etnobotânicos validados, implementando inovador "Registro Comunitário" onde comunidades definem níveis de acesso a seus conhecimentos.
+#### 4. Useflora: Banco de Dados Etnobotânicos (UFSC)
+Sistema com registros etnobotânicos validados, implementando inovador "Registro Comunitário" onde comunidades definem níveis de acesso a seus conhecimentos.
 
 ### O Problema da Fragmentação
 
 Apesar de perseguirem objetivos convergentes, essas iniciativas geram:
 
 - **Dispersão de dados**: mesmo conhecimento armazenado em múltiplos sistemas sem sincronização
-- **Padrões inconsistentes**: Useflor@ (41 campos relacional), GEF (DarwinCore), SISGEN (patrimônio genético), RCS (agregador flexível)
+- **Padrões inconsistentes**: Useflora (41 campos relacional), GEF (DarwinCore), SISGEN (patrimônio genético), RCS (agregador flexível)
 - **Replicação de esforços**: múltiplos "registros comunitários" em desenvolvimento paralelo
 - **Soberania fragmentada**: comunidades interagem com sistemas desconectados
 - **Pesquisa limitada**: impossível fazer queries que atravessem iniciativas
@@ -117,6 +117,17 @@ graph TB
     EXT2[Fauna do Brasil API] --> C2
     EXT3[GBIF API] --> C2
 ```
+
+### Metodologia: C4 Model
+
+A arquitetura deste sistema é documentada utilizando o **C4 Model**, um framework de visualização que descreve arquiteturas de software através de 4 níveis de diagrama progressivamente mais detalhados:
+
+1. **Context (Contexto)**: Visão de alto nível mostrando o sistema como uma caixa preta e suas interações com usuários e sistemas externos
+2. **Container (Contêiner)**: Decomposição do sistema em contêineres tecnológicos (aplicações, bancos de dados, serviços) e como se comunicam
+3. **Component (Componente)**: Detalhamento interno de cada contêiner, mostrando os componentes principais e suas responsabilidades
+4. **Code (Código)**: Nível de detalhe de classes, interfaces e relações (opcional, utilizamos quando necessário)
+
+Essa abordagem oferece clareza progressiva: iniciantes entendem o contexto geral, arquitetos visualizam containers e decisões técnicas, e desenvolvedores acessam detalhes de componentes. Os diagramas neste repositório seguem este padrão, permitindo navegação intuitiva da visão geral até a implementação.
 
 ### 1. Contexto de Aquisição
 
