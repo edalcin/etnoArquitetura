@@ -41,10 +41,10 @@ Apesar de perseguirem objetivos convergentes, essas iniciativas geram:
 
 Uma arquitetura integrada possibilitaria:
 
-✅ **Interoperabilidade sem perda de autonomia**: camada comum permite compartilhamento mantendo independência
-✅ **Registro comunitário unificado**: comunidade faz login uma única vez, direitos propagam para todas plataformas
-✅ **Governança consistente**: FAIR + CARE implementados uniformemente
-✅ **Busca e análise integrada**: pesquisadores com visão completa da biodiversidade
+✅ **Interoperabilidade sem perda de autonomia**: camada comum permite compartilhamento mantendo independência</br>
+✅ **Registro comunitário unificado**: comunidade faz login uma única vez, direitos propagam para todas plataformas</br>
+✅ **Governança consistente**: FAIR + CARE implementados uniformemente</br>
+✅ **Busca e análise integrada**: pesquisadores com visão completa da biodiversidade</br>
 ✅ **Repartição de benefícios rastreável**: Lei 13.123/2015 cumprida efetivamente
 
 ### Imperativo Legal e Institucional
@@ -356,12 +356,14 @@ Integração planejada com principais sistemas brasileiros:
 
 ---
 
-## Iniciativas Relacionadas em Andamento
+## Iniciativas Relacionadas em Andamento (GitHub)
 
-Esta proposta de arquitetura dialoga e se complementa com os seguintes projetos em desenvolvimento:
+Esta proposta de arquitetura dialoga e se complementa com os seguintes projetos em desenvolvimento e disponíveis no GitHub:
 
-### Dados e Biodiversidade
+### Dados da Sociobiodiversidade
 - **[Useflora](https://github.com/nperoni/Useflora)** - Banco de dados etnobotânicos com registro comunitário onde comunidades definem níveis de acesso
+
+### Padrões de Dados
 - **[SocioBio](https://github.com/sibbr/sociobio)** - Padrão de dados para sociobiodiversidade brasileira, desenvolvido pelo SiBBr
 - **[CESP SiBBr 2024](https://github.com/sibbr/cesp-sibbr-2024)** - Iniciativa de ciência aberta e interoperabilidade do Sistema de Informação sobre Biodiversidade Brasileira
 
