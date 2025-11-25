@@ -4,7 +4,10 @@
       "Bash(mkdir:*)",
       "Bash(tree:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive architecture documentation for Traditional Knowledge Information System\n\n- Add detailed README with system overview, objectives, and architecture\n- Include C4 model diagrams (context, container, and component levels)\n- Add Architecture Decision Records (ADRs) for database, API standards, and data model\n- Document integration patterns and data flow\n- Include reference materials from related initiatives (MCTI-GEF, SISGEN, Useflora)\n- Add Claude Code configuration\n\nThis establishes the foundational architecture following C.A.R.E. principles\nfor ethical management of traditional knowledge associated with biodiversity.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive architecture documentation for Traditional Knowledge Information System\n\n- Add detailed README with system overview, objectives, and architecture\n- Include C4 model diagrams (context, container, and component levels)\n- Add Architecture Decision Records (ADRs) for database, API standards, and data model\n- Document integration patterns and data flow\n- Include reference materials from related initiatives (MCTI-GEF, SISGEN, Useflora)\n- Add Claude Code configuration\n\nThis establishes the foundational architecture following C.A.R.E. principles\nfor ethical management of traditional knowledge associated with biodiversity.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:zenodo.org)"
     ],
     "deny": [],
     "ask": []
