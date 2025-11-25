@@ -38,14 +38,14 @@ graph TB
 
     subgraph "Contexto: Apresentação"
         PUB_API[Public API<br/>GraphQL/REST<br/>Consulta Pública]
-        SEARCH[Search Service<br/>Elasticsearch<br/>Busca Avançada]
+        SEARCH[Search Service<br/>Motor de Busca<br/>Busca Avançada]
         EXPORT[Export Service<br/>Node.js<br/>Geração de Arquivos]
     end
 
     subgraph "Data Layer"
-        DB[(Database<br/>MongoDB/SurrealDB<br/>Dados Principais)]
-        CACHE[(Cache<br/>Redis<br/>Performance)]
-        STORAGE[Object Storage<br/>S3/MinIO<br/>Arquivos/Imagens]
+        DB[(Banco de Dados<br/>Orientado a Documentos<br/>Dados Principais)]
+        CACHE[(Cache<br/>Cache em Memória<br/>Performance)]
+        STORAGE[Object Storage<br/>Armazenamento Distribuído<br/>Arquivos/Imagens]
     end
 
     subgraph "Sistemas Externos"
@@ -425,7 +425,7 @@ GET    /api/public/stats                    - Estatísticas gerais
 ```
 
 #### 11. Search Service
-**Tecnologia:** Elasticsearch ou Typesense
+**Tecnologia:** Motor de busca especializado (ex: full-text search)
 
 **Responsabilidades:**
 - Indexação de documentos
@@ -486,7 +486,7 @@ GET    /api/export/download/:id             - Download do arquivo
 
 ### Data Layer
 
-#### Database (MongoDB ou SurrealDB)
+#### Banco de Dados Orientado a Documentos
 **Escolha:** Documentado em [ADR-001](../architecture-decisions/ADR-001-database-selection.md)
 
 **Coleções/Tabelas Principais:**
@@ -631,8 +631,8 @@ GET    /api/export/download/:id             - Download do arquivo
 | Public Portal | Next.js | Nuxt, Gatsby | SSR + SSG, SEO excelente |
 | APIs | Node.js/Express | Python/FastAPI, Go | Ecossistema JS unificado |
 | Crawler | Python/Scrapy | Node.js/Puppeteer | Maturidade para scraping |
-| Database | MongoDB/SurrealDB | PostgreSQL + JSON | Flexibilidade de schema |
-| Search | Elasticsearch | Algolia, Typesense | Poder de indexação |
+| Database | Orientado a Documentos | SQL, Multi-Modal | Flexibilidade de schema |
+| Search | Motor de Busca | Múltiplas opções | Poder de indexação e consultas |
 | Queue | RabbitMQ | Kafka, Redis Streams | Simplicidade, confiabilidade |
 | Cache | Redis | Memcached | Estruturas de dados ricas |
 

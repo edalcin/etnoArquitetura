@@ -680,7 +680,7 @@ graph TB
 
     DB_DS --> DB3[(Database)]
     CACHE_DS --> CACHE3[(Redis)]
-    SEARCH_DS --> SEARCH3[Elasticsearch]
+    SEARCH_DS --> SEARCH3[Motor de Busca]
 
     style GW fill:#85bbf0
     style CACHE_MW fill:#f4a261
@@ -825,7 +825,7 @@ const speciesResolver = {
     searchSpecies: async (_, args, { dataSources }) => {
       const { name, family, region, use, limit, offset } = args;
 
-      // Usar Elasticsearch para busca
+      // Usar motor de busca para busca avançada
       const results = await dataSources.search.searchSpecies({
         query: {
           bool: {
@@ -962,10 +962,10 @@ graph LR
         INDEXER[Indexer<br/>Real-time Sync]
         SEARCH_API[Search API<br/>Query Interface]
 
-        subgraph "Elasticsearch"
-            SPECIES_IDX[Species Index]
-            USES_IDX[Uses Index]
-            REGIONS_IDX[Regions Index]
+        subgraph "Motor de Busca"
+            SPECIES_IDX[Índice de Espécies]
+            USES_IDX[Índice de Usos]
+            REGIONS_IDX[Índice de Regiões]
         end
 
         ANALYZER[Custom Analyzers<br/>Tokenization]
@@ -983,7 +983,7 @@ graph LR
     ANALYZER --> SPECIES_IDX
 ```
 
-#### Elasticsearch Index Mappings
+#### Mapeamento de Índices do Motor de Busca
 
 ```json
 {
@@ -1040,13 +1040,13 @@ graph LR
 #### Real-time Indexing
 
 ```javascript
-// MongoDB Change Streams para sincronização em tempo real
+// Change Streams para sincronização em tempo real com o motor de busca
 const changeStream = db.collection('records').watch();
 
 changeStream.on('change', async (change) => {
   switch (change.operationType) {
     case 'insert':
-      await elasticsearchClient.index({
+      await searchClient.index({
         index: 'species',
         id: change.fullDocument._id,
         document: transformToSearchDocument(change.fullDocument)
@@ -1054,7 +1054,7 @@ changeStream.on('change', async (change) => {
       break;
 
     case 'update':
-      await elasticsearchClient.update({
+      await searchClient.update({
         index: 'species',
         id: change.documentKey._id,
         doc: transformToSearchDocument(change.updateDescription.updatedFields)
@@ -1062,7 +1062,7 @@ changeStream.on('change', async (change) => {
       break;
 
     case 'delete':
-      await elasticsearchClient.delete({
+      await searchClient.delete({
         index: 'species',
         id: change.documentKey._id
       });

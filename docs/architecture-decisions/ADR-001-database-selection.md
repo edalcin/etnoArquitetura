@@ -1,4 +1,4 @@
-# ADR-001: Seleção de Banco de Dados
+# ADR-001: Abordagem de Armazenamento de Dados
 
 ## Status
 **Proposto** - Aguardando validação técnica
@@ -17,11 +17,11 @@ O Sistema de Conhecimento Tradicional precisa armazenar dados altamente complexo
 ## Requisitos
 
 ### Funcionais
-1. Armazenar documentos JSON com estrutura flexível
-2. Suportar consultas relacionais (joins)
+1. Armazenar dados estruturados e semi-estruturados (JSON)
+2. Suportar consultas relacionais
 3. Indexação eficiente para buscas
 4. Transações ACID para operações críticas
-5. Change streams para sincronização em tempo real
+5. Capacidade de sincronização e replicação de dados
 
 ### Não-Funcionais
 1. Escalabilidade horizontal
@@ -30,303 +30,262 @@ O Sistema de Conhecimento Tradicional precisa armazenar dados altamente complexo
 4. Backup e recuperação automatizados
 5. Comunidade ativa e suporte
 
-## Opções Consideradas
+## Abordagens Consideradas
 
-### Opção 1: PostgreSQL + JSONB
+### Abordagem 1: Bancos de Dados SQL (Relacionais)
 
 **Prós:**
 - Maturidade e estabilidade comprovadas
-- Suporte robusto a JSON (JSONB) com indexação
 - Transações ACID completas
-- Extensões poderosas (PostGIS para dados geográficos)
-- Queries relacionais tradicionais
+- Integridade referencial garantida
+- Queries poderosas em dados estruturados
+- Suporte a dados geoespaciais (extensões)
+- Excelente para dados fortemente relacionados
 
 **Contras:**
-- Schema ainda relativamente rígido
-- Joins complexos em JSONB podem ser lentos
-- Escalabilidade horizontal requer ferramentas externas (Citus)
+- Schema relativamente rígido (requer migração para mudanças estruturais)
+- Joins complexos podem ser custosos em dados M:N
 - Menos natural para dados fortemente aninhados
+- Escalabilidade horizontal requer ferramentas adicionais
 
-**Caso de Uso Ideal:** Dados estruturados com alguma flexibilidade JSON
+**Caso de Uso Ideal:** Dados altamente estruturados com relações bem definidas
 
-### Opção 2: MongoDB
+### Abordagem 2: Bancos de Dados Orientados a Documentos (JSON)
 
 **Prós:**
 - Schema flexível por padrão (schemaless)
 - Excelente para documentos aninhados e complexos
-- Escalabilidade horizontal nativa (sharding)
-- Change streams para eventos em tempo real
-- Aggregation pipeline poderoso
-- Grande comunidade e ecossistema
+- Escalabilidade horizontal nativa
+- Replicação e sincronização em tempo real
+- Pipeline de agregação poderoso para análises
+- Natural para dados semi-estruturados
 
 **Contras:**
-- Joins (lookups) menos eficientes que SQL
-- Transações multi-documento têm overhead
+- Joins entre documentos menos eficientes que SQL
+- Transações complexas têm overhead
 - Requer planejamento cuidadoso de índices
 - Pode levar a duplicação de dados (desnormalização)
 
 **Caso de Uso Ideal:** Documentos complexos e hierárquicos com schema evolutivo
 
-### Opção 3: SurrealDB
+### Abordagem 3: Bancos de Dados Multi-Modais
 
 **Prós:**
-- Multi-modelo: documentos + grafos + relações
-- Suporta relações nativas (como SQL) e grafos
-- Query language moderna (SurrealQL)
-- Flexibilidade de schema com tipagem opcional
-- Real-time subscriptions nativas
-- Embedding de relações simplificado
+- Suportam múltiplos modelos de dados (documentos, grafos, relações)
+- Modelam relações complexas tipo grafo de forma eficiente
+- Flexibilidade de schema com suporte a múltiplos paradigmas
+- Subscriptions em tempo real nativas
+- Simplificam relacionamentos complexos
 
 **Contras:**
-- Tecnologia relativamente nova (menos madura)
-- Comunidade menor
-- Menos ferramentas de terceiros
-- Casos de uso em produção limitados
-- Documentação ainda em desenvolvimento
+- Tecnologia relativamente nova (maturidade variável)
+- Comunidades podem ser menores
+- Casos de uso em produção variam
+- Documentação em desenvolvimento contínuo
 
-**Caso de Uso Ideal:** Dados com relações complexas tipo grafo e necessidade de flexibilidade
+**Caso de Uso Ideal:** Dados com relações complexas tipo grafo, taxonomia e necessidade de flexibilidade
 
 ## Decisão
 
-**Recomendamos MongoDB como solução principal, com avaliação futura de SurrealDB.**
+**Recomendamos uma arquitetura orientada a documentos (JSON) como solução principal, com avaliação de abordagens multi-modais para casos específicos.**
 
 ### Justificativa
 
-#### Por que MongoDB?
+#### Por que Orientado a Documentos (JSON)?
 
-1. **Flexibilidade de Schema**: Conhecimento tradicional é intrinsecamente heterogêneo. MongoDB permite:
-   ```javascript
-   // Registro de planta medicinal
+1. **Flexibilidade de Schema**: Conhecimento tradicional é intrinsecamente heterogêneo. Modelo JSON permite:
+   ```json
    {
-     type: "medicinal_plant",
-     scientificName: "Manihot esculenta",
-     uses: [{
-       description: "Tratamento de feridas",
-       preparationMethod: "Cataplasma de folhas",
-       dosage: "Aplicar 2x ao dia"
+     "type": "medicinal_plant",
+     "scientificName": "Manihot esculenta",
+     "uses": [{
+       "description": "Tratamento de feridas",
+       "preparationMethod": "Cataplasma de folhas",
+       "dosage": "Aplicar 2x ao dia"
      }]
    }
 
-   // Registro de ritual
    {
-     type: "ritual",
-     name: "Benzimento",
-     plants: [ObjectId("...")],
-     steps: ["...", "..."],
-     seasonality: "Lua cheia"
+     "type": "ritual",
+     "name": "Benzimento",
+     "relatedSpecies": ["..."],
+     "steps": ["...", "..."],
+     "seasonality": "Lua cheia"
    }
    ```
 
-2. **Aggregation Pipeline**: Permite análises complexas:
-   ```javascript
-   db.records.aggregate([
-     { $match: { "uses.category": "medicinal" } },
-     { $unwind: "$uses" },
-     { $group: { _id: "$family", count: { $sum: 1 } } },
-     { $sort: { count: -1 } }
-   ])
-   ```
+2. **Análises Complexas**: Pipeline de agregação permite análises avançadas em documentos
+3. **Sincronização**: Capacidade nativa de sincronização e replicação
+4. **Escalabilidade**: Escalamento horizontal para crescimento
+5. **Maturidade**: Ecossistema robusto e amplamente adotado
 
-3. **Change Streams**: Sincronização em tempo real com Elasticsearch:
-   ```javascript
-   const changeStream = collection.watch();
-   changeStream.on('change', (change) => {
-     // Atualizar índice de busca
-     elasticsearch.index(change.fullDocument);
-   });
-   ```
+#### Por que não SQL (exclusivamente)?
 
-4. **Escalabilidade**: Sharding nativo para crescimento horizontal
-5. **Ecossistema**: Ferramentas maduras (Compass, Atlas, mongoose ODM)
+Embora bancos SQL sejam extremamente robustos, a natureza dos dados favorece um modelo orientado a documentos:
 
-#### Por que não PostgreSQL?
+- Relações M:N complexas (espécie ↔ usos ↔ comunidades ↔ regiões) implicam múltiplas tabelas de junção
+- Evolução frequente de schema seria custosa em SQL
+- Dados aninhados naturais em JSON são incômodos em modelo relacional
 
-Embora PostgreSQL seja extremamente robusto, a natureza dos dados favorece um modelo orientado a documentos:
+#### Por que não Multi-Modal (ainda)?
 
-- Relações M:N complexas (espécie ↔ usos ↔ comunidades ↔ regiões) seriam múltiplas tabelas de junção
-- JSONB é poderoso, mas ainda requer schema de tabela principal
-- Escalabilidade horizontal mais complexa
+Bancos multi-modais são promissores para modelar relações tipo grafo (taxonomia, relações entre comunidades). No entanto:
 
-#### Por que não SurrealDB (ainda)?
+- **Maturidade**: Tecnologias variam em nível de consolidação
+- **Produção**: Casos de uso em larga escala podem ser limitados
+- **Risco**: Menos histórico de deployments em larga escala
 
-SurrealDB é promissor, especialmente para modelar relações tipo grafo (ex: taxonomia, relações entre comunidades). No entanto:
+**Recomendação**: Avaliar abordagens multi-modais em fase futura (v2.0 do sistema) quando integração com sistemas de grafo for crítica.
 
-- **Risco de Maturidade**: Projeto lançado em 2022, ainda em rápida evolução
-- **Produção**: Poucos casos de uso em larga escala documentados
-- **Equipe**: Risco de lock-in em tecnologia emergente
+## Estrutura de Dados em Formato JSON
 
-**Recomendação**: Avaliar SurrealDB em fase futura (v2.0 do sistema) quando a tecnologia estiver mais madura.
+### Entidades Principais
 
-## Estrutura de Dados no MongoDB
+#### 1. Registros de Conhecimento
 
-### Coleções Principais
-
-#### 1. `records` (Registros de Conhecimento)
-```javascript
+```json
 {
-  _id: ObjectId("..."),
-  type: "traditional_knowledge",
-  status: "published", // pending, in_review, approved, published, rejected
-  version: 3,
+  "id": "rec_123456",
+  "type": "traditional_knowledge",
+  "status": "published",
+  "version": 3,
 
-  // Dados Taxonômicos
-  species: {
-    scientificName: "Manihot esculenta Crantz",
-    commonNames: ["Mandioca", "Cassava", "Aipim"],
-    family: "Euphorbiaceae",
-    kingdom: "Plantae",
-    taxonKey: 5290063, // GBIF key
-    verified: true
+  "species": {
+    "scientificName": "Manihot esculenta Crantz",
+    "commonNames": ["Mandioca", "Cassava", "Aipim"],
+    "family": "Euphorbiaceae",
+    "kingdom": "Plantae",
+    "taxonKey": "5290063",
+    "verified": true
   },
 
-  // Usos Tradicionais
-  uses: [
+  "uses": [
     {
-      category: "medicinal",
-      description: "Tratamento de inflamações",
-      preparationMethod: "Chá das folhas",
-      dosage: "200ml 3x ao dia",
-      partUsed: "folhas",
-      administration: "oral",
-      ailments: ["inflamação", "dor"]
+      "category": "medicinal",
+      "description": "Tratamento de inflamações",
+      "preparationMethod": "Chá das folhas",
+      "dosage": "200ml 3x ao dia",
+      "partUsed": "folhas",
+      "administration": "oral",
+      "ailments": ["inflamação", "dor"]
     },
     {
-      category: "food",
-      description: "Farinha para alimentos",
-      preparationMethod: "Ralado e torrado",
-      partUsed: "raiz"
+      "category": "food",
+      "description": "Farinha para alimentos",
+      "preparationMethod": "Ralado e torrado",
+      "partUsed": "raiz"
     }
   ],
 
-  // Localização
-  location: {
-    region: "Amazônia",
-    country: "Brasil",
-    state: "Amazonas",
-    coordinates: {
-      type: "Point",
-      coordinates: [-60.0217, -3.1190] // [longitude, latitude]
+  "location": {
+    "region": "Amazônia",
+    "country": "Brasil",
+    "state": "Amazonas",
+    "coordinates": {
+      "type": "Point",
+      "latitude": -3.1190,
+      "longitude": -60.0217
     }
   },
 
-  // Comunidade (dados públicos apenas)
-  community: {
-    name: "Comunidade Indígena XYZ", // Opcional, requer consentimento
-    ethnicity: "Tikuna"
+  "community": {
+    "name": "Comunidade Indígena XYZ",
+    "ethnicity": "Tikuna"
   },
 
-  // Fonte
-  source: {
-    type: "secondary", // primary | secondary
-    reference: "Silva et al. (2023)",
-    doi: "10.1234/example",
-    url: "https://...",
-    year: 2023,
-    collectedBy: ObjectId("user_id"), // Para fontes primárias
-    collectionDate: ISODate("2023-05-15")
+  "source": {
+    "type": "secondary",
+    "reference": "Silva et al. (2023)",
+    "doi": "10.1234/example",
+    "year": 2023,
+    "collectionDate": "2023-05-15"
   },
 
-  // Metadados
-  createdAt: ISODate("2025-01-15T10:30:00Z"),
-  createdBy: ObjectId("user_id"),
-  lastModifiedAt: ISODate("2025-01-20T14:20:00Z"),
-  lastModifiedBy: ObjectId("curator_id"),
-  publishedAt: ISODate("2025-01-21T09:00:00Z"),
-
-  // Controle de Acesso
-  permissions: {
-    visibility: "public", // public | restricted | private
-    allowedUsers: [], // Para registros restritos
-    allowedCommunities: []
+  "metadata": {
+    "createdAt": "2025-01-15T10:30:00Z",
+    "createdBy": "user_123",
+    "lastModifiedAt": "2025-01-20T14:20:00Z",
+    "lastModifiedBy": "curator_456",
+    "publishedAt": "2025-01-21T09:00:00Z"
   },
 
-  // Imagens
-  images: [
+  "permissions": {
+    "visibility": "public",
+    "allowedUsers": [],
+    "allowedCommunities": []
+  },
+
+  "images": [
     {
-      filename: "plant_123_001.jpg",
-      caption: "Folhas da planta",
-      credit: "Fotógrafo XYZ",
-      license: "CC BY-SA 4.0"
+      "filename": "plant_123_001.jpg",
+      "caption": "Folhas da planta",
+      "credit": "Fotógrafo XYZ",
+      "license": "CC BY-SA 4.0"
     }
   ],
 
-  // Tags
-  tags: ["etnobotânica", "medicina tradicional", "Amazônia"]
+  "tags": ["etnobotânica", "medicina tradicional", "Amazônia"]
 }
 ```
 
-#### 2. `users` (Usuários)
-```javascript
+#### 2. Usuários
+
+```json
 {
-  _id: ObjectId("..."),
-  email: "researcher@example.com",
-  name: "Dr. João Silva",
-  role: "curator", // researcher | curator | admin | community_rep
-  community: ObjectId("community_id"), // Para community_rep
-  institution: "Universidade Federal do Amazonas",
-  permissions: ["read", "write", "approve"],
-  createdAt: ISODate("..."),
-  lastLogin: ISODate("...")
+  "id": "user_123",
+  "email": "researcher@example.com",
+  "name": "Dr. João Silva",
+  "role": "curator",
+  "community": "community_456",
+  "institution": "Universidade Federal do Amazonas",
+  "permissions": ["read", "write", "approve"],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "lastLogin": "2025-01-22T14:20:00Z"
 }
 ```
 
-#### 3. `audit_logs` (Auditoria e Versionamento)
-```javascript
+#### 3. Logs de Auditoria
+
+```json
 {
-  _id: ObjectId("..."),
-  recordId: ObjectId("record_id"),
-  versionNumber: 2,
-  action: "update", // create | update | approve | reject | publish
-  userId: ObjectId("user_id"),
-  timestamp: ISODate("..."),
-  changes: {
-    field: "species.scientificName",
-    oldValue: "Manihot esculenta",
-    newValue: "Manihot esculenta Crantz"
+  "id": "audit_789",
+  "recordId": "rec_123456",
+  "versionNumber": 2,
+  "action": "update",
+  "userId": "user_123",
+  "timestamp": "2025-01-20T14:20:00Z",
+  "changes": {
+    "field": "species.scientificName",
+    "oldValue": "Manihot esculenta",
+    "newValue": "Manihot esculenta Crantz"
   },
-  snapshot: { /* full document snapshot */ },
-  comments: "Corrigido nome científico após validação GBIF"
+  "comments": "Corrigido nome científico após validação GBIF"
 }
 ```
 
-### Índices
+### Índices Recomendados
 
-```javascript
-// records collection
-db.records.createIndex({ "species.scientificName": 1 });
-db.records.createIndex({ "species.family": 1 });
-db.records.createIndex({ "uses.category": 1 });
-db.records.createIndex({ "location.coordinates": "2dsphere" }); // Geoespacial
-db.records.createIndex({ status: 1, createdAt: -1 });
-db.records.createIndex({ tags: 1 });
-db.records.createIndex({ "source.doi": 1 }, { unique: true, sparse: true });
+Os seguintes campos devem ser indexados para otimizar performance:
 
-// Text search
-db.records.createIndex({
-  "species.scientificName": "text",
-  "species.commonNames": "text",
-  "uses.description": "text"
-}, { weights: { "species.scientificName": 10, "species.commonNames": 5 } });
+- `species.scientificName` - para buscas por espécie
+- `species.family` - para buscas por família
+- `uses.category` - para filtros de uso
+- `location.coordinates` - para buscas geoespaciais
+- `status`, `createdAt` - para ordenação e filtro
+- `tags` - para busca por tag
+- `source.doi` - para buscas por DOI
+- Busca textual em múltiplos campos (nome científico, nomes comuns, descrições)
 
-// users collection
-db.users.createIndex({ email: 1 }, { unique: true });
-db.users.createIndex({ role: 1 });
+## Estratégia de Evolução Futura
 
-// audit_logs collection
-db.audit_logs.createIndex({ recordId: 1, versionNumber: -1 });
-db.audit_logs.createIndex({ timestamp: -1 });
-```
+Para crescimento futuro:
 
-## Estratégia de Migração Futura (SurrealDB)
-
-Se decidirmos migrar para SurrealDB no futuro:
-
-1. **Fase 1 (Atual)**: MongoDB como sistema principal
-2. **Fase 2**: Avaliação piloto de SurrealDB para subset de dados (6 meses)
-3. **Fase 3**: Migração gradual se piloto for bem-sucedido
-   - Manter MongoDB como read replica durante transição
-   - Sincronização bidirecional temporária
-   - Migração por partes (por região, por tipo de dado)
+1. **Fase 1 (Atual)**: Orientado a documentos (JSON) como sistema principal
+2. **Fase 2**: Avaliação de multi-modelos para taxonomia (6-12 meses)
+3. **Fase 3**: Integração de grafo para relações complexas se necessário
+   - Manter orientado a documentos como fonte de verdade
+   - Grafo como índice secundário para consultas específicas
+   - Sincronização bidirecional entre os modelos
 
 ## Consequências
 

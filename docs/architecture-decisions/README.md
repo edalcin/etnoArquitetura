@@ -21,13 +21,13 @@ Architecture Decision Records (ADRs) são documentos que capturam decisões arqu
 
 ## Lista de ADRs
 
-### ADR-001: Seleção de Banco de Dados
+### ADR-001: Abordagem de Armazenamento de Dados
 **Status:** Proposto
 **Data:** Janeiro 2025
 
-Decisão sobre qual banco de dados utilizar para armazenar conhecimento tradicional. Avalia MongoDB, PostgreSQL e SurrealDB, considerando flexibilidade de schema, escalabilidade e complexidade dos dados.
+Decisão sobre qual abordagem de armazenamento utilizar para dados de conhecimento tradicional. Avalia bancos SQL, orientados a documentos (JSON) e multi-modais, considerando flexibilidade de schema, escalabilidade e complexidade dos dados.
 
-**Decisão:** MongoDB como solução principal, com avaliação futura de SurrealDB.
+**Decisão:** Arquitetura orientada a documentos (JSON) como solução principal, com avaliação futura de abordagens multi-modais.
 
 **[Leia o documento completo →](ADR-001-database-selection.md)**
 
