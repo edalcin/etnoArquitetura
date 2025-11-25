@@ -356,6 +356,32 @@ Integração planejada com principais sistemas brasileiros:
 
 ---
 
+## Iniciativas Relacionadas em Andamento
+
+Esta proposta de arquitetura dialoga e se complementa com os seguintes projetos em desenvolvimento:
+
+### Dados e Biodiversidade
+- **[Useflora](https://github.com/nperoni/Useflora)** - Banco de dados etnobotânicos com registro comunitário onde comunidades definem níveis de acesso
+- **[SocioBio](https://github.com/sibbr/sociobio)** - Padrão de dados para sociobiodiversidade brasileira, desenvolvido pelo SiBBr
+- **[CESP SiBBr 2024](https://github.com/sibbr/cesp-sibbr-2024)** - Iniciativa de ciência aberta e interoperabilidade do Sistema de Informação sobre Biodiversidade Brasileira
+
+### Vocabulários e Terminologia
+- **[EtnoVocab](https://github.com/edalcin/etnovocab)** - Vocabulário controlado para termos etnobotânicos e etnobiológicos
+- **[EtnoTermos](https://github.com/edalcin/etnotermos)** - Terminologia e glossário especializado para conhecimento tradicional
+- **[EtnoVector](https://github.com/edalcin/etnovector)** - Vetorização e representação semântica de conceitos etnobotânicos
+
+### Estruturas de Dados e Documentação
+- **[Estrutura de Dados Etnobotânicos](https://github.com/edalcin/Estrutura-de-Dados-Etnobotanicos)** - Modelos e esquemas para armazenamento de informações etnobotânicas
+- **[EtnoPapers](https://github.com/edalcin/etnopapers)** - Coleção de trabalhos e publicações sobre etnobiologia e conhecimento tradicional
+
+Estes projetos complementares fornecem:
+- Padrões de dados interoperáveis
+- Vocabulários controlados para melhorar a qualidade dos dados
+- Exemplos práticos de implementação
+- Recursos para curadoria e validação de informações etnobotânicas
+
+---
+
 ## Referências
 
 Para a lista completa de referências bibliográficas organizadas segundo a norma **ABNT NBR 6023:2018** (padrão brasileiro), consulte [Referencias.md](Referencias.md).
