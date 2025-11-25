@@ -1,5 +1,7 @@
 # Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17710620.svg)](https://doi.org/10.5281/zenodo.17710620)
+
 ## Visão Geral
 
 Este repositório contém a proposta de arquitetura para um sistema de informações dedicado à preservação, curadoria e compartilhamento de conhecimento tradicional associado à biodiversidade. O sistema foi projetado com respeito aos princípios **C.A.R.E.** (Collective Benefit, Authority to Control, Responsibility, Ethics) e em conformidade com a legislação pertinente.
@@ -367,6 +369,32 @@ Essa documentação incorpora referências a:
 - Etnobiologia e conhecimento tradicional
 - Iniciativas brasileiras práticas (GEF Entre-Ciências, SISGEN, Useflor@, RCS)
 - Data sovereignty e consentimento livre, prévio e informado (CLPI)
+
+---
+
+## Citação
+
+Se você usar esta proposta de arquitetura em seu trabalho, por favor cite como:
+
+**APA:**
+```
+Dalcin, E. (2025). Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade - Versão 1.0 (Version v1.0) [Software documentation]. Zenodo. https://doi.org/10.5281/zenodo.17710620
+```
+
+**BibTeX:**
+```bibtex
+@software{dalcin2025,
+  author = {Dalcin, Eduardo},
+  title = {Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade - Versão 1.0},
+  version = {v1.0},
+  year = {2025},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.17710620},
+  url = {https://doi.org/10.5281/zenodo.17710620}
+}
+```
+
+**DOI:** [10.5281/zenodo.17710620](https://doi.org/10.5281/zenodo.17710620)
 
 ---
 
