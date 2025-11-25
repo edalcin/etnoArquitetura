@@ -25,8 +25,8 @@ graph TB
     end
 
     subgraph "Sistemas Externos"
+        FLORA[Flora e Funga<br/>do Brasil]
         GBIF[GBIF<br/>Global Biodiversity<br/>Information Facility]
-        GN[Global Names<br/>Verifier]
         JOURNALS[Periódicos<br/>Científicos]
         EXT[Outros Sistemas<br/>Etnobotânicos]
     end
@@ -39,13 +39,13 @@ graph TB
     PUB -->|Consulta informações<br/>públicas| SYS
     DEV -->|Consome APIs<br/>públicas| SYS
 
-    SYS -->|Valida taxonomia| GBIF
-    SYS -->|Verifica nomenclatura| GN
+    SYS -->|Verifica nomenclatura<br/>(primária)| FLORA
+    SYS -->|Valida taxonomia<br/>(fallback)| GBIF
     SYS -->|Coleta artigos<br/>automaticamente| JOURNALS
     SYS -->|Integra dados| EXT
 
+    FLORA -->|Retorna verificação| SYS
     GBIF -->|Retorna validação| SYS
-    GN -->|Retorna verificação| SYS
     JOURNALS -->|Fornece metadados| SYS
     EXT -->|Compartilha dados| SYS
 
@@ -56,8 +56,8 @@ graph TB
     style CUR fill:#08427b,stroke:#052e56,color:#ffffff
     style PUB fill:#08427b,stroke:#052e56,color:#ffffff
     style DEV fill:#08427b,stroke:#052e56,color:#ffffff
+    style FLORA fill:#999999,stroke:#6b6b6b,color:#ffffff
     style GBIF fill:#999999,stroke:#6b6b6b,color:#ffffff
-    style GN fill:#999999,stroke:#6b6b6b,color:#ffffff
     style JOURNALS fill:#999999,stroke:#6b6b6b,color:#ffffff
     style EXT fill:#999999,stroke:#6b6b6b,color:#ffffff
 ```
@@ -162,20 +162,25 @@ graph TB
 - Classificação taxonômica
 - Status de conservação
 
-### 2. Global Names Verifier
-**URL:** https://verifier.globalnames.org/api
+### 2. Flora e Funga do Brasil
+**URL:** https://floradobrasil.jbrj.gov.br/consulta/
 
-**Propósito:** Verificação de nomenclatura científica
+**Propósito:** Verificação primária de nomenclatura científica para plantas, algas e fungos brasileiros
 
 **Integração:**
-- API REST para normalização de nomes
-- Detecção de sinônimos
-- Correção ortográfica
-- Referências bibliográficas
+- API REST para busca de nomenclatura
+- Validação contra base de dados oficial brasileira
+- Dados de distribuição geográfica
+- Informações sobre status de conservação
 
 **Dados Consumidos:**
-- Nomes científicos (verificação em lote)
-- Sugestões de correção
+- Nomes científicos (verificação individual ou em lote)
+- Informações taxonômicas completas
+- Status de validação
+
+**Estratégia:**
+- Primeira tentativa: Flora e Funga do Brasil (validação primária)
+- Fallback: GBIF (quando não encontrado ou para espécies não-brasileiras)
 
 ### 3. Periódicos Científicos
 **Exemplos:** Journal of Ethnobiology, Economic Botany, Ethnobotany Research
@@ -214,7 +219,7 @@ graph TB
 ### Fluxo 1: Aquisição de Dados Primários
 1. Pesquisador ou Representante autentica no sistema
 2. Preenche formulário estruturado de registro
-3. Sistema valida dados contra GBIF/Global Names
+3. Sistema valida dados contra Flora e Funga do Brasil (com fallback GBIF)
 4. Dados são armazenados com status "pendente"
 5. Curador é notificado para revisão
 
@@ -229,7 +234,7 @@ graph TB
 ### Fluxo 3: Curadoria e Validação
 1. Curador acessa dashboard de itens pendentes
 2. Revisa dados submetidos
-3. Sistema executa validações automáticas (GBIF, GN)
+3. Sistema executa validações automáticas (Flora e Funga do Brasil com fallback GBIF)
 4. Curador enriquece e corrige informações
 5. Representante de comunidade valida (se aplicável)
 6. Curador aprova publicação
@@ -282,7 +287,7 @@ graph TB
 
 ### Premissas
 - Acesso à internet para validações externas
-- Disponibilidade das APIs GBIF e Global Names
+- Disponibilidade das APIs Flora e Funga do Brasil e GBIF
 - Colaboração ativa de comunidades tradicionais
 - Pesquisadores capacitados para entrada de dados
 

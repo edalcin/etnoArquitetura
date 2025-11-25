@@ -156,53 +156,42 @@ const gbifRequest = gbifLimiter.wrap(async (url) => {
 
 ---
 
-### 2. Global Names Verifier
+### 2. Flora e Funga do Brasil
 
-**URL Base:** `https://verifier.globalnames.org/api/v1/`
+**URL Base:** `https://floradobrasil.jbrj.gov.br/api/v1/`
 
-**Propósito:** Verificação adicional de nomenclatura e detecção de sinônimos
+**Propósito:** Verificação primária de nomenclatura científica para plantas, algas e fungos brasileiros
 
 #### Endpoint Principal
 
-##### 2.1 Verifications (Batch)
+##### 2.1 Search Species
 
-Verifica múltiplos nomes científicos em uma única requisição.
+Busca espécies por nome científico com validação contra a base oficial brasileira.
 
 **Request:**
 ```http
-POST https://verifier.globalnames.org/api/v1/verifications
-Content-Type: application/json
-
-{
-  "names": [
-    "Manihot esculenta",
-    "Banisteriopsis caapi",
-    "Euterpe oleracea"
-  ],
-  "dataSources": [1, 11, 12], // 1=Catalogue of Life, 11=GBIF, 12=EOL
-  "withAllMatches": false
-}
+GET https://floradobrasil.jbrj.gov.br/api/v1/search?name=Manihot esculenta
 ```
 
 **Response:**
 ```json
 {
-  "names": [
+  "results": [
     {
-      "inputName": "Manihot esculenta",
-      "bestResult": {
-        "matchedName": "Manihot esculenta Crantz",
-        "matchType": "Exact",
-        "score": 0.988,
-        "dataSourceTitle": "Catalogue of Life",
-        "dataSourceId": 1,
-        "synonyms": [
-          "Manihot utilissima",
-          "Janipha manihot"
-        ],
-        "classificationPath": "Plantae|Tracheophyta|...|Euphorbiaceae|Manihot|esculenta"
-      },
-      "results": [ /* outros resultados */ ]
+      "id": "12345",
+      "scientificName": "Manihot esculenta Crantz",
+      "synonyms": [
+        "Manihot utilissima Pohl",
+        "Janipha manihot H.Karst."
+      ],
+      "family": "Euphorbiaceae",
+      "genus": "Manihot",
+      "species": "esculenta",
+      "author": "Crantz",
+      "distribution": ["AC", "AM", "AP", "BA", "CE", "ES"],
+      "conservationStatus": "LC",
+      "endemism": false,
+      "originType": "cultivated"
     }
   ]
 }
@@ -210,37 +199,74 @@ Content-Type: application/json
 
 **Uso no Sistema:**
 ```javascript
-async function verifyNomenclature(names) {
-  const response = await fetch(
-    'https://verifier.globalnames.org/api/v1/verifications',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        names,
-        dataSources: [1, 11], // Catalogue of Life + GBIF
-        withAllMatches: false
-      })
+async function validateFloraDoBasil(scientificName) {
+  try {
+    const response = await fetch(
+      `https://floradobrasil.jbrj.gov.br/api/v1/search?name=${encodeURIComponent(scientificName)}`
+    );
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      const species = data.results[0];
+      return {
+        found: true,
+        scientificName: species.scientificName,
+        family: species.family,
+        synonyms: species.synonyms || [],
+        distribution: species.distribution,
+        conservationStatus: species.conservationStatus,
+        source: 'Flora e Funga do Brasil'
+      };
+    } else {
+      return {
+        found: false,
+        message: 'Espécie não encontrada na Flora e Funga do Brasil',
+        source: 'Flora e Funga do Brasil'
+      };
     }
-  );
+  } catch (error) {
+    console.error('Flora e Funga error:', error);
+    return null;
+  }
+}
+```
 
-  const data = await response.json();
+#### Estratégia de Validação em Cascata
 
-  return data.names.map(result => ({
-    input: result.inputName,
-    matched: result.bestResult?.matchedName,
-    score: result.bestResult?.score,
-    dataSource: result.bestResult?.dataSourceTitle,
-    synonyms: result.bestResult?.synonyms || []
-  }));
+```javascript
+async function validateTaxonomyWithFallback(scientificName) {
+  // 1. Tentar Flora e Funga do Brasil
+  const floraResult = await validateFloraDoBasil(scientificName);
+  if (floraResult && floraResult.found) {
+    return floraResult;
+  }
+
+  // 2. Fallback para GBIF
+  console.log('Não encontrado na Flora e Funga. Tentando GBIF...');
+  const gbifResult = await validateTaxonomy(scientificName);
+
+  if (gbifResult.validated) {
+    return {
+      ...gbifResult,
+      source: 'GBIF (fallback)'
+    };
+  }
+
+  // 3. Falha total
+  return {
+    found: false,
+    message: 'Espécie não encontrada em nenhuma base de dados',
+    suggestedAction: 'Verificar nomenclatura ou contatar especialista'
+  };
 }
 ```
 
 #### Casos de Uso
 
-1. **Correção Ortográfica**: Detectar typos em nomes científicos
-2. **Sinônimos**: Identificar nomes alternativos para mesma espécie
-3. **Validação Cruzada**: Comparar com resultado do GBIF
+1. **Validação Primária**: Verificação rápida de espécies brasileiras
+2. **Distribuição Geográfica**: Obter estados/regiões onde a espécie ocorre
+3. **Status de Conservação**: Integração com classificação oficial brasileira
+4. **Detecção de Sinônimos**: Identificar nomes alternativos aceitos
 
 ---
 
@@ -408,13 +434,14 @@ async function resolveDOI(doi) {
 
 ---
 
-### 4. Bases de Dados Regionais (Futuro)
+### 4. Outras Bases de Dados Regionais (Futuro)
 
 #### 4.1 Integrações Previstas
 
-- **Flora do Brasil 2020**: Dados taxonômicos de plantas brasileiras
-- **Tropicos (Missouri Botanical Garden)**: Nomenclatura botânica
-- **The Plant List**: Lista de espécies aceitas
+- **Tropicos (Missouri Botanical Garden)**: Nomenclatura botânica com enfoque em Neotrópicos
+- **The Plant List**: Lista de espécies aceitas (fallback adicional)
+- **SIBBR (SiBBr)**: Sistema de Informação sobre Biodiversidade Brasileira
+- **SISGEN**: Sistema Nacional de Gestão do Patrimônio Genético
 
 #### 4.2 Padrão de Integração
 
@@ -430,32 +457,48 @@ class ExternalDataSource {
   }
 }
 
-// Implementação específica
+// Implementação específica para Flora e Funga do Brasil
 class FloraDoBasilDataSource extends ExternalDataSource {
   async validate(scientificName) {
     // Lógica específica da Flora do Brasil
+    // Retorna resultado se encontrado
   }
 
   async enrich(species) {
-    // Enriquecer com dados adicionais
+    // Enriquecer com dados adicionais de distribuição
   }
 }
 
-// Registro de fontes
-const dataSources = [
-  new GBIFDataSource(),
-  new GlobalNamesDataSource(),
-  new FloraDoBasilDataSource()
-];
+// Implementação específica para GBIF (fallback)
+class GBIFDataSource extends ExternalDataSource {
+  async validate(scientificName) {
+    // Lógica do GBIF como fallback
+  }
 
-// Validação em cascata
-async function validateWithAllSources(scientificName) {
-  const results = await Promise.allSettled(
-    dataSources.map(source => source.validate(scientificName))
-  );
+  async enrich(species) {
+    // Enriquecer com dados globais
+  }
+}
 
-  // Consolidar resultados
-  return consolidateResults(results);
+// Estratégia de validação: Flora e Funga primeiro, depois GBIF
+async function validateWithPriorityStrategy(scientificName) {
+  const floraSource = new FloraDoBasilDataSource();
+  const gbifSource = new GBIFDataSource();
+
+  // 1. Tentar Flora e Funga do Brasil
+  const floraResult = await floraSource.validate(scientificName);
+  if (floraResult && floraResult.found) {
+    return floraResult;
+  }
+
+  // 2. Fallback para GBIF
+  const gbifResult = await gbifSource.validate(scientificName);
+  if (gbifResult && gbifResult.found) {
+    return { ...gbifResult, source: 'GBIF (fallback)' };
+  }
+
+  // 3. Falha total
+  return { found: false, message: 'Espécie não encontrada' };
 }
 ```
 
@@ -643,8 +686,8 @@ sequenceDiagram
     participant User as Pesquisador
     participant API as Acquisition API
     participant Cache as Redis Cache
+    participant Flora as Flora e Funga API
     participant GBIF as GBIF API
-    participant GN as Global Names API
     participant DB as Database
 
     User->>API: POST /records (scientificName)
@@ -653,13 +696,17 @@ sequenceDiagram
     alt Cache HIT
         Cache-->>API: Return cached taxonomy
     else Cache MISS
-        API->>GBIF: GET /species/match
-        GBIF-->>API: Taxonomy data
-        API->>Cache: Store in cache (30 days TTL)
-    end
+        API->>Flora: GET /search?name=...
 
-    API->>GN: POST /verifications (verify name)
-    GN-->>API: Nomenclature validation
+        alt Flora FOUND
+            Flora-->>API: Species data (primária)
+            API->>Cache: Store in cache (30 days TTL)
+        else Flora NOT FOUND
+            API->>GBIF: GET /species/match
+            GBIF-->>API: Taxonomy data (fallback)
+            API->>Cache: Store in cache (30 days TTL)
+        end
+    end
 
     API->>API: Consolidate validations
 
@@ -768,8 +815,8 @@ Sempre respeitar rate limits de APIs externas:
 
 | API | Rate Limit | Implementação |
 |-----|-----------|---------------|
+| Flora e Funga do Brasil | Sem limite oficial | Bottleneck: 5 req/s |
 | GBIF | 10 req/s (recomendado) | Bottleneck: 5 req/s |
-| Global Names | Sem limite oficial | 10 req/s |
 | PubMed | 3 req/s sem key, 10 req/s com key | Bottleneck: 3 req/s |
 | Crossref | 50 req/s (com Polite Pool) | Bottleneck: 20 req/s |
 
@@ -786,7 +833,7 @@ Este documento define os padrões de integração que garantem:
 
 ## Referências
 
+- [Flora e Funga do Brasil](https://floradobrasil.jbrj.gov.br/consulta/)
 - [GBIF API Documentation](https://www.gbif.org/developer/summary)
-- [Global Names API](https://verifier.globalnames.org/apidoc)
 - [NCBI E-utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/)
 - [Crossref API](https://github.com/CrossRef/rest-api-doc)

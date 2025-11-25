@@ -114,8 +114,8 @@ graph TB
     DB --> P2
     DB --> P3
 
-    EXT1[GBIF API] --> C2
-    EXT2[Global Names API] --> C2
+    EXT1[Flora e Funga do Brasil API] --> C2
+    EXT2[GBIF API] --> C2
 ```
 
 ### 1. Contexto de Aquisição
@@ -205,8 +205,8 @@ Devido à **complexidade e flexibilidade** necessárias para armazenar conhecime
 
 ### Integrações Externas
 
-- **GBIF API** (https://www.gbif.org/) - Validação de dados taxonômicos
-- **Global Names Verifier** (https://verifier.globalnames.org/api) - Verificação de nomenclatura científica
+- **Flora e Funga do Brasil API** (https://floradobrasil.jbrj.gov.br/consulta/) - Verificação primária de nomenclatura científica e validação de dados taxonômicos (plantas, algas e fungos brasileiros)
+- **GBIF API** (https://www.gbif.org/) - Validação de dados taxonômicos como fallback quando não encontrado na Flora e Funga do Brasil
 - Periódicos científicos via APIs ou scraping ético
 
 ## Princípios Orientadores
@@ -291,7 +291,7 @@ Esta abordagem segue exemplos bem-sucedidos como **CyberTracker** e **MAPEO**, q
 O sistema implementa um **workflow robusto de validação** em múltiplas etapas:
 
 1. **Validação Estrutural**: Verificação automática de conformidade com padrões de dados (Darwin Core, Plinian Core)
-2. **Validação Taxonômica**: Integração com GBIF API e Global Names para verificação de nomenclatura científica
+2. **Validação Taxonômica**: Integração com Flora e Funga do Brasil API para verificação de nomenclatura científica e validação de dados taxonômicos, com fallback para GBIF API quando não encontrado
 3. **Curadoria Especializada**: Revisão por especialistas de domínio (botânicos, etnobólogos, farmacêuticos tradicionais)
 4. **Validação Comunitária**: Participação de detentores de conhecimento na certificação de dados antes de publicação
 5. **Rastreabilidade Completa**: Logs de auditoria de todas as mudanças e validações

@@ -49,8 +49,8 @@ graph TB
     end
 
     subgraph "Sistemas Externos"
+        FLORA[Flora e Funga do Brasil API]
         GBIF[GBIF API]
-        GN[Global Names API]
         JOURNALS[Periódicos]
     end
 
@@ -74,8 +74,8 @@ graph TB
     CUR_API --> DB
     CUR_API --> VAL
     CUR_API --> NOTIF
+    VAL --> FLORA
     VAL --> GBIF
-    VAL --> GN
 
     PUB_API --> DB
     PUB_API --> SEARCH
@@ -320,8 +320,8 @@ Pendente → Em Revisão → Em Validação → Aprovado → Publicado
 **Tecnologia:** Python com Flask ou FastAPI
 
 **Responsabilidades:**
-- Validar nomes científicos via GBIF
-- Verificar nomenclatura via Global Names
+- Validar nomes científicos via Flora e Funga do Brasil (primária)
+- Verificar nomenclatura via GBIF (fallback)
 - Enriquecer com dados taxonômicos
 - Sugerir correções
 
@@ -335,13 +335,17 @@ GET    /api/validation/suggestions/:name    - Sugestões de correção
 
 **Integração Externa:**
 ```python
-# GBIF Species Match
-GET https://api.gbif.org/v1/species/match?name={scientific_name}
+# Flora e Funga do Brasil (primária)
+GET https://floradobrasil.jbrj.gov.br/api/v1/search?name={scientific_name}
 
-# Global Names Verifier
-POST https://verifier.globalnames.org/api/v1/verifications
-Body: {"names": ["Genus species"]}
+# GBIF Species Match (fallback)
+GET https://api.gbif.org/v1/species/match?name={scientific_name}
 ```
+
+**Estratégia de Validação:**
+1. Tenta encontrar na Flora e Funga do Brasil
+2. Se não encontrado, fallback para GBIF
+3. Retorna dados taxonômicos enriquecidos
 
 **Response Enrichment:**
 ```json

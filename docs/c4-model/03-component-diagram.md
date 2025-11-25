@@ -395,8 +395,8 @@ graph TB
     WFS --> RR2
     VERS --> AR
 
+    VS2 --> FLORA[Flora e Funga do Brasil API]
     VS2 --> GBIF[GBIF API]
-    VS2 --> GN[Global Names API]
 
     RR2 --> DB2[(Database)]
     AR --> DB2
@@ -477,54 +477,61 @@ class WorkflowService {
 ```javascript
 class ValidationService {
   async validateTaxonomy(scientificName) {
-    // GBIF Species Match
-    const gbifResponse = await axios.get(
-      `https://api.gbif.org/v1/species/match`,
-      { params: { name: scientificName } }
-    );
+    // Tentar Flora e Funga do Brasil (primária)
+    let floraResponse;
+    try {
+      floraResponse = await axios.get(
+        `https://floradobrasil.jbrj.gov.br/api/v1/search`,
+        { params: { name: scientificName } }
+      );
+    } catch (error) {
+      console.log('Flora e Funga não encontrou. Tentando GBIF...');
+      floraResponse = null;
+    }
 
-    // Global Names Verifier
-    const gnResponse = await axios.post(
-      'https://verifier.globalnames.org/api/v1/verifications',
-      { names: [scientificName] }
-    );
+    // Fallback para GBIF se não encontrado na Flora
+    let gbifResponse;
+    if (!floraResponse || !floraResponse.data.results.length) {
+      gbifResponse = await axios.get(
+        `https://api.gbif.org/v1/species/match`,
+        { params: { name: scientificName } }
+      );
+    }
 
     return {
-      gbif: {
-        matchType: gbifResponse.data.matchType,
-        confidence: gbifResponse.data.confidence,
-        acceptedName: gbifResponse.data.scientificName,
-        taxonKey: gbifResponse.data.usageKey,
-        kingdom: gbifResponse.data.kingdom,
-        family: gbifResponse.data.family
-      },
-      globalNames: {
-        matchedName: gnResponse.data.names[0].bestResult?.matchedName,
-        score: gnResponse.data.names[0].bestResult?.score,
-        dataSource: gnResponse.data.names[0].bestResult?.dataSourceTitle
-      },
-      recommendation: this.generateRecommendation(gbifResponse, gnResponse)
+      flora: floraResponse?.data.results[0] || null,
+      gbif: gbifResponse?.data || null,
+      source: floraResponse ? 'Flora e Funga do Brasil' : 'GBIF',
+      recommendation: this.generateRecommendation(floraResponse, gbifResponse)
     };
   }
 
-  generateRecommendation(gbif, gn) {
-    if (gbif.data.matchType === 'EXACT' && gbif.data.confidence >= 95) {
+  generateRecommendation(flora, gbif) {
+    if (flora && flora.data.results.length > 0) {
       return {
         status: 'approved',
-        message: 'Taxonomia validada com alta confiança',
-        suggestedName: gbif.data.scientificName
+        message: 'Nomenclatura validada pela Flora e Funga do Brasil',
+        suggestedName: flora.data.results[0].scientificName,
+        source: 'Flora e Funga do Brasil'
       };
-    } else if (gbif.data.matchType === 'FUZZY') {
+    } else if (gbif && gbif.data.matchType === 'EXACT' && gbif.data.confidence >= 95) {
+      return {
+        status: 'approved',
+        message: 'Taxonomia validada com alta confiança via GBIF',
+        suggestedName: gbif.data.scientificName,
+        source: 'GBIF'
+      };
+    } else if (gbif && gbif.data.matchType === 'FUZZY') {
       return {
         status: 'review',
-        message: 'Nome similar encontrado. Revisar sugestão.',
+        message: 'Nome similar encontrado via GBIF. Revisar sugestão.',
         suggestedName: gbif.data.scientificName
       };
     } else {
       return {
         status: 'not_found',
-        message: 'Espécie não encontrada. Verificar nomenclatura.',
-        suggestedName: gn.data.names[0]?.bestResult?.matchedName
+        message: 'Espécie não encontrada na Flora e Funga do Brasil ou GBIF. Verificar nomenclatura.',
+        suggestedName: null
       };
     }
   }
