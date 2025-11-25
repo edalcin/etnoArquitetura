@@ -1,4 +1,4 @@
-# Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade
+# Arquitetura para um Sistema de Informações sobre Conhecimento Tradicional Associado à Biodiversidade - Versão 1.1
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.17714765-blue)](https://doi.org/10.5281/zenodo.17714765)
 
