@@ -105,7 +105,6 @@ graph TB
     A3 --> DB
     A4 --> DB
 
-    DB --> C1
     C1 --> DB
     C2 --> DB
     C3 --> DB
