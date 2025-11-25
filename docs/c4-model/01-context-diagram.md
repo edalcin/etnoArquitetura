@@ -32,18 +32,18 @@ graph TB
         EXT[Outros Sistemas<br/>Etnobotânicos]
     end
 
-    PQ -->|Registra dados primários<br/>Faz curadoria| SYS
-    RC -->|Valida conhecimento<br/>Controla autoridade| SYS
-    ADM -->|Gerencia sistema<br/>Aprova dados| SYS
-    CUR -->|Valida qualidade<br/>Enriquece dados| SYS
+    PQ -->|Registra dados e faz curadoria| SYS
+    RC -->|Valida conhecimento e controla| SYS
+    ADM -->|Gerencia sistema e aprova| SYS
+    CUR -->|Valida e enriquece dados| SYS
 
-    PUB -->|Consulta informações<br/>públicas| SYS
-    DEV -->|Consome APIs<br/>públicas| SYS
+    PUB -->|Consulta informações públicas| SYS
+    DEV -->|Consome APIs públicas| SYS
 
-    SYS -->|Verifica nomenclatura<br/>Flora/Fungos (primária)| FLORA
-    SYS -->|Verifica nomenclatura<br/>Fauna (primária)| FAUNA
-    SYS -->|Valida taxonomia<br/>(fallback)| GBIF
-    SYS -->|Coleta artigos<br/>automaticamente| JOURNALS
+    SYS -->|Verifica Flora/Fungos primária| FLORA
+    SYS -->|Verifica Fauna primária| FAUNA
+    SYS -->|Valida taxonomia fallback| GBIF
+    SYS -->|Coleta artigos automaticamente| JOURNALS
     SYS -->|Integra dados| EXT
 
     FLORA -->|Retorna verificação| SYS
