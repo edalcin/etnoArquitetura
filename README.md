@@ -111,6 +111,7 @@ graph TB
     C2 --> DB
     C3 --> DB
 
+
     DB --> P1
     DB --> P2
     DB --> P3
@@ -118,6 +119,9 @@ graph TB
     EXT1[Flora e Funga do Brasil API] --> C2
     EXT2[Fauna do Brasil API] --> C2
     EXT3[GBIF API] --> C2
+    EXT4[Plataforma de<br>Territórios Tradicionais] --> C3
+    EXT5[Outras Fontes<br>Autoritativas] --> C3
+    
 ```
 
 ### Metodologia: C4 Model
