@@ -399,12 +399,29 @@ graph TB
     VS2 --> FAUNA[Fauna do Brasil API]
     VS2 --> GBIF[GBIF API]
 
+    subgraph "Territory & Authority"
+        TAS[Territory & Authority Service<br/>Geospatial Validation]
+        TP[Territory Provider<br/>Territory Query]
+        AP[Authority Provider<br/>Authority Query]
+    end
+
+    TAS --> TP
+    TAS --> AP
+    TP --> MPF[Plataforma de Territórios<br/>Tradicionais API]
+    AP --> AUTH_SRC[Outras Fontes<br/>Autoritativas]
+
+    REC --> TAS
+    TAS --> RR2
+
     RR2 --> DB2[(Database)]
     AR --> DB2
 
     style WFS fill:#f4a261
     style VERS fill:#a8dadc
     style PERM fill:#f4a261
+    style TAS fill:#aa8844
+    style TP fill:#aa8844
+    style AP fill:#aa8844
 ```
 
 #### Componentes Detalhados
@@ -697,6 +714,153 @@ class PermissionService {
     if (user.role === 'community_rep' && record.community === user.community) return true;
 
     return false;
+  }
+}
+```
+
+##### 5. Territory & Authority Service
+**Responsabilidade:** Validar proveniência territorial e autoridade de dados
+
+```javascript
+class TerritoryAndAuthorityService {
+  constructor() {
+    this.territoryProvider = new TerritoryProvider();
+    this.authorityProvider = new AuthorityProvider();
+  }
+
+  async validateProvenance(record) {
+    // 1. Validação territorial por coordenadas
+    const territoryValidation = await this.territoryProvider.validateCoordinates(
+      record.coordinates.latitude,
+      record.coordinates.longitude
+    );
+
+    // 2. Validação contra fontes autoritativas
+    const authorityValidations = await this.authorityProvider.validateRecord(record);
+
+    // 3. Compilar resultado
+    return {
+      territory: territoryValidation,
+      authorities: authorityValidations,
+      legalCompliance: {
+        lei_13123: this.checkLei13123Compliance(territoryValidation),
+        nagoya_protocol: authorityValidations.length > 0,
+        care_principles: true
+      }
+    };
+  }
+
+  checkLei13123Compliance(territoryValidation) {
+    // Verifica se conhecimento pode ser rastreado a sua origem territorial
+    return territoryValidation.found === true;
+  }
+}
+
+class TerritoryProvider {
+  constructor() {
+    this.mlfBaseURL = 'https://territoriostradicionais.mpf.mp.br/api/v1';
+    this.cache = new Map(); // Redis em produção
+  }
+
+  async validateCoordinates(latitude, longitude) {
+    const cacheKey = `territory:${latitude}:${longitude}`;
+
+    // Verificar cache
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    try {
+      const response = await axios.get(
+        `${this.mlfBaseURL}/territories/point-in-polygon`,
+        { params: { lat: latitude, lon: longitude } }
+      );
+
+      const result = response.data.found ? {
+        found: true,
+        territoryId: response.data.territory.id,
+        territoryName: response.data.territory.name,
+        people: response.data.territory.people
+      } : {
+        found: false,
+        message: 'Coordenadas fora de territórios conhecidos'
+      };
+
+      // Cache por 7 dias
+      this.cache.set(cacheKey, result);
+      return result;
+    } catch (error) {
+      console.error('Territory validation error:', error);
+      return { found: false, error: error.message };
+    }
+  }
+
+  async searchTerritoryByPeople(peopleName) {
+    const response = await axios.get(
+      `${this.mlfBaseURL}/territories`,
+      { params: { people: peopleName } }
+    );
+
+    return response.data.territories || [];
+  }
+}
+
+class AuthorityProvider {
+  constructor() {
+    this.sources = this.loadConfiguredSources();
+  }
+
+  loadConfiguredSources() {
+    // Carrega configuração de sources do arquivo de configuração
+    return [
+      {
+        name: 'SISGEN',
+        baseURL: process.env.SISGEN_API_URL,
+        priority: 1
+      },
+      {
+        name: 'SiBBr',
+        baseURL: process.env.SIBBR_API_URL,
+        priority: 2
+      }
+    ];
+  }
+
+  async validateRecord(record) {
+    const results = [];
+
+    for (const source of this.sources) {
+      try {
+        const result = await this.validateAgainstSource(source, record);
+        results.push({
+          source: source.name,
+          ...result,
+          success: true
+        });
+      } catch (error) {
+        results.push({
+          source: source.name,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    return results;
+  }
+
+  async validateAgainstSource(source, record) {
+    const response = await axios.post(
+      `${source.baseURL}/validate`,
+      {
+        scientificName: record.scientificName,
+        region: record.region,
+        community: record.community
+      },
+      { timeout: 5000 }
+    );
+
+    return response.data;
   }
 }
 ```

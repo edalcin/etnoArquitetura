@@ -33,6 +33,7 @@ graph TB
     subgraph "Contexto: Curadoria"
         CUR_API[Curation API<br/>Node.js/Express<br/>Workflow de Validação]
         VAL[Validation Service<br/>Python<br/>Validação Taxonômica]
+        TERR_VAL[Territory & Authority Service<br/>Python<br/>Validação Territorial e de Proveniência]
         NOTIF[Notification Service<br/>Node.js<br/>Email/Push]
     end
 
@@ -53,6 +54,8 @@ graph TB
         FAUNA[Fauna do Brasil API]
         GBIF[GBIF API]
         JOURNALS[Periódicos]
+        TERR[Plataforma de Territórios<br/>Tradicionais API]
+        AUTH[Outras Fontes<br/>Autoritativas]
     end
 
     U1 --> WEB
@@ -74,10 +77,13 @@ graph TB
 
     CUR_API --> DB
     CUR_API --> VAL
+    CUR_API --> TERR_VAL
     CUR_API --> NOTIF
     VAL --> FLORA
     VAL --> FAUNA
     VAL --> GBIF
+    TERR_VAL --> TERR
+    TERR_VAL --> AUTH
 
     PUB_API --> DB
     PUB_API --> SEARCH
@@ -101,6 +107,7 @@ graph TB
     style CRAWLER fill:#85bbf0,stroke:#5d9dd1,color:#000000
     style ETL fill:#85bbf0,stroke:#5d9dd1,color:#000000
     style VAL fill:#85bbf0,stroke:#5d9dd1,color:#000000
+    style TERR_VAL fill:#85bbf0,stroke:#5d9dd1,color:#000000
     style NOTIF fill:#85bbf0,stroke:#5d9dd1,color:#000000
     style SEARCH fill:#85bbf0,stroke:#5d9dd1,color:#000000
     style EXPORT fill:#85bbf0,stroke:#5d9dd1,color:#000000
@@ -369,7 +376,69 @@ GET https://api.gbif.org/v1/species/match?name={scientific_name}
 }
 ```
 
-#### 9. Notification Service
+#### 9. Territory & Authority Service
+**Tecnologia:** Python com Flask ou FastAPI
+
+**Responsabilidades:**
+- Validar proveniência territorial de registros
+- Consultar dados da Plataforma de Territórios Tradicionais
+- Validar contra outras fontes autoritativas
+- Enriquecer registros com informações territoriais
+- Rastrear conformidade com Lei 13.123/2015
+
+**Endpoints:**
+```
+POST   /api/validation/territory            - Validar território
+GET    /api/validation/territory/:id        - Detalhes de território
+POST   /api/validation/authority            - Validar contra fontes
+POST   /api/validation/provenance           - Validar proveniência
+GET    /api/validation/communities/:id      - Dados de comunidade
+```
+
+**Integração Externa:**
+```python
+# Plataforma de Territórios Tradicionais
+GET https://territoriostradicionais.mpf.mp.br/api/v1/territories?region={region}
+GET https://territoriostradicionais.mpf.mp.br/api/v1/territories/{id}
+
+# Outras Fontes Autoritativas (genérica)
+GET https://[source]/api/authority/validate?data={encoded_data}
+```
+
+**Estratégia de Validação:**
+1. Extrair coordenadas/região do registro
+2. Consultar Plataforma de Territórios Tradicionais
+3. Verificar correspondência com polígonos territoriais
+4. Validar contra fontes autoritativas configuradas
+5. Retorna dados enriquecidos com rastreabilidade territorial
+
+**Response Enrichment:**
+```json
+{
+  "territory_match": {
+    "found": true,
+    "territory_id": "IND_001",
+    "name": "Terra Indígena Yanomami",
+    "people": "Yanomami",
+    "demarcation_status": "demarcated",
+    "area_hectares": 9664975,
+    "state": "AM"
+  },
+  "authority_validations": [
+    {
+      "source": "SISGEN",
+      "status": "registered",
+      "reference_id": "SIS-2025-00123"
+    }
+  ],
+  "legal_compliance": {
+    "lei_13123": true,
+    "nagoya_protocol": true
+  }
+}
+```
+
+#### 10. Notification Service
 **Tecnologia:** Node.js
 
 **Responsabilidades:**
@@ -388,10 +457,11 @@ GET https://api.gbif.org/v1/species/match?name={scientific_name}
 - Registro aprovado/rejeitado
 - Comentário em registro
 - Atribuição de tarefa
+- Alertas de validação territorial
 
 ### Contexto: Apresentação
 
-#### 10. Public API
+#### 11. Public API
 **Tecnologia:** Node.js com GraphQL (Apollo Server) ou REST
 
 **Responsabilidades:**
@@ -436,7 +506,7 @@ GET    /api/public/regions                  - Listar regiões
 GET    /api/public/stats                    - Estatísticas gerais
 ```
 
-#### 11. Search Service
+#### 12. Search Service
 **Tecnologia:** Motor de busca especializado (ex: full-text search)
 
 **Responsabilidades:**
@@ -472,7 +542,7 @@ GET    /api/public/stats                    - Estatísticas gerais
 }
 ```
 
-#### 12. Export Service
+#### 13. Export Service
 **Tecnologia:** Node.js
 
 **Responsabilidades:**
@@ -643,6 +713,8 @@ GET    /api/export/download/:id             - Download do arquivo
 | Public Portal | Next.js | Nuxt, Gatsby | SSR + SSG, SEO excelente |
 | APIs | Node.js/Express | Python/FastAPI, Go | Ecossistema JS unificado |
 | Crawler | Python/Scrapy | Node.js/Puppeteer | Maturidade para scraping |
+| Validation Service | Python/FastAPI | Node.js, Go | Especializado em ML/validação |
+| Territory & Authority Service | Python/FastAPI | Node.js, Go | Processamento geoespacial, APIs |
 | Database | Orientado a Documentos | SQL, Multi-Modal | Flexibilidade de schema |
 | Search | Motor de Busca | Múltiplas opções | Poder de indexação e consultas |
 | Queue | RabbitMQ | Kafka, Redis Streams | Simplicidade, confiabilidade |

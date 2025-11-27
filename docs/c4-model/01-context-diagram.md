@@ -30,6 +30,8 @@ graph TB
         GBIF[GBIF<br/>Global Biodiversity<br/>Information Facility]
         JOURNALS[Periódicos<br/>Científicos]
         EXT[Outros Sistemas<br/>Etnobotânicos]
+        TERR[Plataforma de<br/>Territórios Tradicionais<br/>MPF]
+        AUTH[Outras Fontes<br/>Autoritativas]
     end
 
     PQ -->|Registra dados e faz curadoria| SYS
@@ -45,12 +47,16 @@ graph TB
     SYS -->|Valida taxonomia fallback| GBIF
     SYS -->|Coleta artigos automaticamente| JOURNALS
     SYS -->|Integra dados| EXT
+    SYS -->|Consulta territórios e proveniência| TERR
+    SYS -->|Valida contra fontes autoritativas| AUTH
 
     FLORA -->|Retorna verificação| SYS
     FAUNA -->|Retorna verificação| SYS
     GBIF -->|Retorna validação| SYS
     JOURNALS -->|Fornece metadados| SYS
     EXT -->|Compartilha dados| SYS
+    TERR -->|Fornece dados territoriais| SYS
+    AUTH -->|Fornece validações| SYS
 
     style SYS fill:#1168bd,stroke:#0b4884,color:#ffffff
     style PQ fill:#08427b,stroke:#052e56,color:#ffffff
@@ -64,6 +70,8 @@ graph TB
     style GBIF fill:#999999,stroke:#6b6b6b,color:#ffffff
     style JOURNALS fill:#999999,stroke:#6b6b6b,color:#ffffff
     style EXT fill:#999999,stroke:#6b6b6b,color:#ffffff
+    style TERR fill:#aa8844,stroke:#8b6f47,color:#ffffff
+    style AUTH fill:#aa8844,stroke:#8b6f47,color:#ffffff
 ```
 
 ## Atores
@@ -235,6 +243,50 @@ graph TB
 - Dados de ocorrência de espécies
 - Informações etnobotânicas
 
+### 5. Plataforma de Territórios Tradicionais (MPF)
+**URL:** https://territoriostradicionais.mpf.mp.br/
+
+**Propósito:** Sincronização de dados territoriais e proveniência geográfica do conhecimento tradicional
+
+**Integração:**
+- API REST para consulta de polígonos territoriais
+- Sincronização automática de limites geográficos
+- Cruzamento espacial de registros com territórios
+- Acesso a dados públicos sobre status de demarcação
+
+**Dados Consumidos:**
+- Polígonos geográficos de territórios indígenas e tradicionais
+- Metadados sobre povos e comunidades
+- Status de demarcação e regularização
+- Informações históricas sobre conflitos territoriais
+
+**Utilidade no Sistema:**
+- Validar proveniência geográfica do conhecimento
+- Associar registros a territórios de origem
+- Rastrear conhecimento até sua comunidade detentora
+- Conformidade com Lei 13.123/2015 sobre proveniência
+
+### 6. Outras Fontes Autoritativas
+**Exemplos:** Plataformas especializadas, bases de dados comunitárias, registros públicos
+
+**Propósito:** Validação e enriquecimento complementar de dados
+
+**Integração:**
+- APIs variadas dependendo da fonte
+- Padrão genérico para novas integrações
+- Priorização de validação (cascata configurável)
+
+**Dados Consumidos:**
+- Informações sobre conhecimento tradicional
+- Validações de nomenclatura especializada
+- Dados culturais e etnobotânicos
+- Informações comunitárias certificadas
+
+**Estratégia:**
+- Permitem extensibilidade do sistema
+- Suportam casos de uso específicos por região/comunidade
+- Mantêm flexibilidade arquitetural
+
 ## Fluxos Principais
 
 ### Fluxo 1: Aquisição de Dados Primários
@@ -255,11 +307,14 @@ graph TB
 ### Fluxo 3: Curadoria e Validação
 1. Curador acessa dashboard de itens pendentes
 2. Revisa dados submetidos
-3. Sistema executa validações automáticas (Flora/Fauna do Brasil com fallback GBIF)
+3. Sistema executa validações automáticas:
+   - Validação taxonômica (Flora/Fauna do Brasil com fallback GBIF)
+   - Validação territorial (cruzamento com Plataforma de Territórios Tradicionais)
+   - Validações contra outras fontes autoritativas
 4. Curador enriquece e corrige informações
 5. Representante de comunidade valida (se aplicável)
 6. Curador aprova publicação
-7. Dados se tornam públicos
+7. Dados se tornam públicos com rastreabilidade completa de proveniência
 
 ### Fluxo 4: Consulta Pública
 1. Usuário público acessa portal

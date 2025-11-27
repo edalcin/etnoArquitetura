@@ -222,9 +222,22 @@ Devido à **complexidade e flexibilidade** necessárias para armazenar conhecime
 
 ### Integrações Externas
 
+#### Validação Taxonômica
+
 - **Flora e Funga do Brasil API** (https://floradobrasil.jbrj.gov.br/consulta/) - Verificação primária de nomenclatura científica e validação de dados taxonômicos para plantas, algas e fungos brasileiros
 - **Fauna do Brasil API** (https://fauna.jbrj.gov.br/) - Verificação primária de nomenclatura científica e validação de dados taxonômicos para fauna brasileira
 - **GBIF API** (https://www.gbif.org/) - Validação de dados taxonômicos como fallback quando não encontrado nas bases brasileiras
+
+#### Validação Territorial e de Proveniência
+
+- **Plataforma de Territórios Tradicionais (MPF)** (https://territoriostradicionais.mpf.mp.br/) - Sincronização de polígonos territoriais de povos indígenas e comunidades tradicionais, validação de proveniência geográfica e cruzamento espacial de registros com seus territórios de origem
+
+#### Fontes Autoritativas
+
+- **Outras Fontes Autoritativas** - Padrão extensível para integração com sistemas especializados (SISGEN, SiBBr, registros comunitários) que complementam validação e enriquecimento de dados
+
+#### Coleta Automática
+
 - Periódicos científicos via APIs ou scraping ético
 
 ## Princípios Orientadores

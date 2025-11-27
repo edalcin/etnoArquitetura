@@ -534,16 +534,357 @@ async function resolveDOI(doi) {
 
 ---
 
-### 5. Outras Bases de Dados Regionais (Futuro)
+### 5. Plataforma de Territórios Tradicionais (MPF)
 
-#### 5.1 Integrações Previstas
+**URL Base:** `https://territoriostradicionais.mpf.mp.br/api/v1/`
+
+**Propósito:** Consultar dados territoriais e validar proveniência geográfica do conhecimento tradicional
+
+#### Endpoints Utilizados
+
+##### 5.1 Search Territories
+
+Busca territórios por região, povo indígena ou coordenadas geográficas.
+
+**Request:**
+```http
+GET https://territoriostradicionais.mpf.mp.br/api/v1/territories?region=AM&type=indigenous
+```
+
+**Response:**
+```json
+{
+  "territories": [
+    {
+      "id": "IND_001",
+      "name": "Terra Indígena Yanomami",
+      "people": ["Yanomami"],
+      "state": "AM",
+      "demarcation_status": "demarcated",
+      "demarcation_date": "1992-05-28",
+      "area_hectares": 9664975,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [...]
+      },
+      "official_url": "https://pib.socioambiental.org/territories/..."
+    }
+  ]
+}
+```
+
+##### 5.2 Territory Details
+
+Obtém informações detalhadas sobre um território específico.
+
+**Request:**
+```http
+GET https://territoriostradicionais.mpf.mp.br/api/v1/territories/IND_001
+```
+
+**Dados Relevantes:**
+- Polígonos e coordenadas geográficas
+- Povos indígenas residentes
+- Status de demarcação
+- Conflitos registrados
+- Dados populacionais
+
+##### 5.3 Point-in-Polygon Query
+
+Verifica se um ponto geográfico pertence a algum território.
+
+**Request:**
+```http
+GET https://territoriostradicionais.mpf.mp.br/api/v1/territories/point-in-polygon?lat=-3.5&lon=-65.5
+```
+
+**Response:**
+```json
+{
+  "found": true,
+  "territory": {
+    "id": "IND_001",
+    "name": "Terra Indígena Yanomami",
+    "people": ["Yanomami"]
+  }
+}
+```
+
+**Uso no Sistema:**
+```javascript
+async function validateTerritorialProvenance(coordinates) {
+  try {
+    const response = await fetch(
+      `https://territoriostradicionais.mpf.mp.br/api/v1/territories/point-in-polygon?lat=${coordinates.lat}&lon=${coordinates.lon}`
+    );
+    const data = await response.json();
+
+    if (data.found) {
+      return {
+        validated: true,
+        territoryId: data.territory.id,
+        territoryName: data.territory.name,
+        people: data.territory.people,
+        source: 'Plataforma de Territórios Tradicionais'
+      };
+    } else {
+      return {
+        validated: false,
+        message: 'Coordenadas fora de territórios conhecidos',
+        source: 'Plataforma de Territórios Tradicionais'
+      };
+    }
+  } catch (error) {
+    console.error('Territory validation error:', error);
+    return null;
+  }
+}
+```
+
+#### Estratégia de Validação Territorial
+
+```javascript
+async function validateTerritoryWithCascade(coordinates, communityName) {
+  // 1. Tentar validação por coordenadas (mais precisa)
+  const coordinateMatch = await validateTerritorialProvenance(coordinates);
+  if (coordinateMatch && coordinateMatch.validated) {
+    return coordinateMatch;
+  }
+
+  // 2. Fallback: buscar território por nome da comunidade
+  const territoryMatch = await searchTerritoryByPeople(communityName);
+  if (territoryMatch && territoryMatch.found) {
+    return {
+      ...territoryMatch,
+      warning: 'Matched by community name, not coordinates'
+    };
+  }
+
+  // 3. Falha - Pode ser fora de territórios ou necessita revisão
+  return {
+    found: false,
+    message: 'Territorio não identificado',
+    suggestedAction: 'Verificar coordenadas ou contatar especialista em territórios'
+  };
+}
+```
+
+#### Cache e Performance
+
+```javascript
+// Cache de territórios por 7 dias (dados mudam raramente)
+const TERRITORY_CACHE_TTL = 7 * 24 * 60 * 60; // 7 dias em segundos
+
+async function getCachedTerritory(territoryId) {
+  const cacheKey = `territory:${territoryId}`;
+
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const result = await fetchTerritoryDetails(territoryId);
+  await redis.set(cacheKey, JSON.stringify(result), { EX: TERRITORY_CACHE_TTL });
+
+  return result;
+}
+```
+
+---
+
+### 6. Outras Fontes Autoritativas
+
+**Propósito:** Validação complementar contra bases de dados especializadas e registros públicos
+
+#### Padrão Genérico para Novas Integrações
+
+Como o sistema precisa ser extensível para incorporar novas fontes autoritativas, define-se um padrão genérico:
+
+```javascript
+interface AuthorityDataSource {
+  async validate(data) => ValidationResult;
+  async enrich(entity) => EnrichedEntity;
+  async search(query) => SearchResults[];
+}
+
+class ConfigurableAuthoritySource implements AuthorityDataSource {
+  constructor(config) {
+    this.baseURL = config.baseURL;
+    this.apiKey = config.apiKey;
+    this.timeout = config.timeout || 5000;
+    this.endpoints = config.endpoints;
+  }
+
+  async validate(data) {
+    const response = await fetch(
+      `${this.baseURL}${this.endpoints.validate}`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${this.apiKey}` },
+        body: JSON.stringify(data),
+        timeout: this.timeout
+      }
+    );
+    return response.json();
+  }
+
+  async enrich(entity) {
+    // Implementação específica da fonte
+  }
+
+  async search(query) {
+    // Implementação específica da fonte
+  }
+}
+```
+
+#### Exemplos de Fontes Autoritativas
+
+**1. SISGEN (Sistema Nacional de Gestão do Patrimônio Genético)**
+```javascript
+const sisgenSource = new ConfigurableAuthoritySource({
+  baseURL: 'https://sisgen.ibict.br/api/v1',
+  apiKey: process.env.SISGEN_API_KEY,
+  endpoints: {
+    validate: '/validate-registration',
+    search: '/registrations/search'
+  }
+});
+
+// Uso
+const sisgenValidation = await sisgenSource.validate({
+  scientificName: 'Manihot esculenta',
+  region: 'Amazonas'
+});
+```
+
+**2. SiBBr (Sistema de Informação sobre Biodiversidade Brasileira)**
+```javascript
+const sibbr Source = new ConfigurableAuthoritySource({
+  baseURL: 'https://sibbr.jbrj.gov.br/api/v1',
+  endpoints: {
+    validate: '/species/validate',
+    search: '/species/search'
+  }
+});
+```
+
+**3. Registros Comunitários (Futuros)**
+```javascript
+const communitySource = new ConfigurableAuthoritySource({
+  baseURL: 'https://communityregistry.etnoknowledge.org/api/v1',
+  endpoints: {
+    validate: '/knowledge/validate',
+    search: '/knowledge/search'
+  }
+});
+```
+
+#### Estratégia de Priorização
+
+```javascript
+class AuthorityValidationChain {
+  constructor(sources) {
+    this.sources = sources; // Ordenadas por prioridade
+  }
+
+  async validateWithPriority(data) {
+    const results = [];
+    const errors = [];
+
+    for (const source of this.sources) {
+      try {
+        const result = await source.validate(data);
+        results.push({
+          source: source.name,
+          ...result,
+          success: true
+        });
+
+        // Se validação bem-sucedida, pode parar ou continuar
+        if (result.valid) {
+          break; // Primeira válida é suficiente
+        }
+      } catch (error) {
+        errors.push({
+          source: source.name,
+          error: error.message
+        });
+      }
+    }
+
+    return {
+      validations: results,
+      errors,
+      primaryValidation: results[0] || null,
+      allValid: results.some(r => r.valid)
+    };
+  }
+}
+
+// Uso
+const chain = new AuthorityValidationChain([
+  sibbr,        // Prioridade 1
+  sisgen,       // Prioridade 2
+  gbif          // Prioridade 3 (fallback)
+]);
+
+const validation = await chain.validateWithPriority({
+  scientificName: 'Manihot esculenta'
+});
+```
+
+#### Configuração de Fontes (config.yaml)
+
+```yaml
+authorityValidation:
+  sources:
+    - name: SISGEN
+      baseURL: https://sisgen.ibict.br/api/v1
+      enabled: true
+      priority: 1
+      timeout: 5000
+      rateLimit: 10_req_per_sec
+      endpoints:
+        validate: /validate-registration
+        search: /registrations/search
+
+    - name: SiBBr
+      baseURL: https://sibbr.jbrj.gov.br/api/v1
+      enabled: true
+      priority: 2
+      timeout: 5000
+      rateLimit: 20_req_per_sec
+      endpoints:
+        validate: /species/validate
+        search: /species/search
+
+    - name: CommunityRegistry
+      baseURL: https://communityregistry.etnoknowledge.org/api/v1
+      enabled: false
+      priority: 3
+      timeout: 5000
+      endpoints:
+        validate: /knowledge/validate
+        search: /knowledge/search
+
+  # Estratégia global
+  strategy: 'first_valid'  # ou 'all', 'quorum'
+  requireSuccessRate: 0.5  # Ao menos 50% deve ter sucesso
+  cacheResults: true
+  cacheTTL: 604800  # 7 dias
+```
+
+---
+
+### 7. Outras Bases de Dados Regionais (Futuro)
+
+#### 7.1 Integrações Previstas
 
 - **Tropicos (Missouri Botanical Garden)**: Nomenclatura botânica com enfoque em Neotrópicos
 - **The Plant List**: Lista de espécies aceitas (fallback adicional)
 - **SIBBR (SiBBr)**: Sistema de Informação sobre Biodiversidade Brasileira
 - **SISGEN**: Sistema Nacional de Gestão do Patrimônio Genético
 
-#### 5.2 Padrão de Integração
+#### 7.2 Padrão de Integração
 
 ```javascript
 // Interface genérica para integrações
